@@ -1,0 +1,19 @@
+.textarea-container {
+    display: flex;
+    position: relative;
+  }
+  
+  .line-numbers {
+    color: white;
+    background-color: black;
+    padding: 10px;
+    text-align: right;
+    user-select: none;
+    white-space: pre;
+  }
+  
+  textarea {
+    flex: 1;
+    margin-left: 10px;
+    resize: none;
+  }
