@@ -17,3 +17,8 @@
     margin-left: 10px;
     resize: none;
   }
+
+  .entrada-textarea, .salida-textarea {
+    background-color: rgb(70, 79, 99);
+    color: white;
+  }

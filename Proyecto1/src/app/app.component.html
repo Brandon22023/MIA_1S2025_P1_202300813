@@ -1,17 +1,18 @@
 <div class="container mt-3" style="font-family: 'Times New Roman', Times, serif;">
-  <div class="d-flex justify-content-between">
-    <button class="btn btn-primary btn-lg">Elegir Archivo</button>
+  <div class="d-flex justify-content-between mb-3">
+    <input type="file" #fileInput class="btn btn-primary btn-lg" style="display: none;" (change)="onFileSelected($event)">
+    <button class="btn btn-primary btn-lg" (click)="fileInput.click()">Elegir Archivo</button>
     <button class="btn btn-success btn-lg">Ejecutar</button>
-    <button class="btn btn-danger btn-lg">Limpiar</button>
+    <button class="btn btn-danger btn-lg" (click)="limpiar()">Limpiar</button>
   </div>
 
   <div class="mb-3">
     <h5>Entrada</h5>
-    <textarea class="form-control" rows="15" style="background-color: black; color: white;"></textarea>
+    <textarea class="form-control entrada-textarea" rows="15" [(ngModel)]="entrada"></textarea>
   </div>
   
   <div>
     <h5>Salida</h5>
-    <textarea class="form-control" rows="15" style="background-color: black; color: white;" readonly></textarea>
+    <textarea class="form-control salida-textarea" rows="15" readonly [(ngModel)]="salida"></textarea>
   </div>
 </div>
