@@ -40,7 +40,12 @@ export class AppComponent {
   ejecutar(): void {
     this.analyzerService.analyze(this.entrada).subscribe({
       next: (response) => {
-        this.salida = JSON.stringify(response.command, null, 2);
+        // Asegúrate de que la respuesta tenga la estructura esperada
+        if (response && response.command) {
+          this.salida = JSON.stringify(response.command, null, 2);
+        } else {
+          this.salida = 'Respuesta inesperada del servidor';
+        }
       },
       error: (error) => {
         // Manejo mejorado del error
