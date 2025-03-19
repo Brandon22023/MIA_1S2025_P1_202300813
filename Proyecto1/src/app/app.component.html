@@ -2,7 +2,7 @@
   <div class="d-flex justify-content-between mb-3">
     <input type="file" #fileInput class="btn btn-primary btn-lg" style="display: none;" (change)="onFileSelected($event)">
     <button class="btn btn-primary btn-lg" (click)="fileInput.click()">Elegir Archivo</button>
-    <button class="btn btn-success btn-lg">Ejecutar</button>
+    <button class="btn btn-success btn-lg" (click)="ejecutar()">Ejecutar</button>
     <button class="btn btn-danger btn-lg" (click)="limpiar()">Limpiar</button>
   </div>
 
