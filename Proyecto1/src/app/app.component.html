@@ -15,4 +15,8 @@
     <h5>Salida</h5>
     <textarea class="form-control salida-textarea" rows="15" readonly [(ngModel)]="salida"></textarea>
   </div>
+  <!-- Elemento para mostrar el mensaje -->
+  <div *ngIf="mensaje" class="alert alert-success mt-3" role="alert">
+    {{ mensaje }}
+  </div>
 </div>

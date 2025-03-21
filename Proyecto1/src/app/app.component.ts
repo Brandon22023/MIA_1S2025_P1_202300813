@@ -1,10 +1,11 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AnalyzerService } from './analyzer.service';
+import { CommonModule } from '@angular/common'; // Importar CommonModule
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   standalone: true
@@ -13,6 +14,7 @@ export class AppComponent {
   title = 'Proyecto1';
   entrada: string = '';
   salida: string = '';
+  mensaje: string = ''; // esto sera para mostrar el exito de lo metico
 
   constructor(private analyzerService: AnalyzerService) {}
 
@@ -35,6 +37,7 @@ export class AppComponent {
   limpiar(): void {
     this.entrada = '';
     this.salida = '';
+    this.mensaje = ''; // Limpiar el mensaje
   }
 
   ejecutar(): void {
@@ -43,8 +46,18 @@ export class AppComponent {
         // Asegúrate de que la respuesta tenga la estructura esperada
         if (response && response.command) {
           this.salida = JSON.stringify(response.command, null, 2);
+
+          // Verificar si el comando es mkdisk
+          if (this.entrada.trim().toLowerCase().startsWith('mkdisk')) {
+            // Establecer el mensaje
+            this.mensaje = 'Comando de MKDISK logrado con éxito';
+          } else {
+            this.mensaje = ''; // Limpiar el mensaje si no es mkdisk
+          }
+
         } else {
           this.salida = 'Respuesta inesperada del servidor';
+          this.mensaje = ''; // Limpiar el mensaje en caso de error
         }
       },
       error: (error) => {

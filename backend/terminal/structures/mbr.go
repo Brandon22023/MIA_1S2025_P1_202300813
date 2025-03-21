@@ -5,6 +5,7 @@ import (
 	"encoding/binary" // Paquete para codificación y decodificación de datos binarios
 	"fmt"             // Paquete para formateo de E/S
 	"os"              // Paquete para funciones del sistema operativo
+	//"path/filepath"
 )
 
 type MBR struct {

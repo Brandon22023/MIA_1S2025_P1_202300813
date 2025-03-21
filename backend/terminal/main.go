@@ -35,7 +35,7 @@ func main() {
 
         // Devuelve el comando analizado como respuesta JSON
         return c.JSON(fiber.Map{
-            "command": cmd,
+            "command": fmt.Sprintf("Parsed Command: %+v", cmd),
         })
     })
 
