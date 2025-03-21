@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	commands "terminal/commands"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,7 +22,9 @@ func Analyzer(input string) (interface{}, error) {
 	case "mkdir":
 		// Llama a la función Mkdir del paquete commands con los argumentos restantes
 		return ParseMkdir(tokens[1:])
-
+    case "mkdisk":
+		// Llama a la función ParseMkdisk del paquete commands con los argumentos restantes
+		return commands.ParseMkdisk(tokens[1:])
 	default:
 		// Si el comando no es reconocido, devuelve un error
 		return nil, fmt.Errorf("comando desconocido: %s", tokens[0])

@@ -74,7 +74,7 @@ func main() {
 			continue
 		}
 
-		// Comentado: Aquí podrías imprimir el comando analizado
+		// Comentado: Aquí podrías imprimir el comrando analizado
 		fmt.Printf("Parsed Command: %+v\n", cmd)
 	}
 
