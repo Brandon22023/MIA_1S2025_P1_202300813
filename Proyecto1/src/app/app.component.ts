@@ -60,6 +60,18 @@ export class AppComponent {
             // Mostrar el modal de éxito
             this.showModal();
 
+          }else if (this.entrada.trim().toLowerCase().startsWith('fdisk')) {
+            // Establecer el mensaje
+            this.mensaje = 'Comando de FDISK logrado con éxito';
+            // Mostrar el modal de éxito
+            this.showModal();
+
+          }else if (this.entrada.trim().toLowerCase().startsWith('mount')) {
+            // Establecer el mensaje
+            this.mensaje = 'Comando de MOUNT logrado con éxito';
+            // Mostrar el modal de éxito
+            this.showModal();
+
           }
           else {
             this.mensaje = ''; // Limpiar el mensaje si no es mkdisk
