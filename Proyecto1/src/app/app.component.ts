@@ -51,7 +51,17 @@ export class AppComponent {
           if (this.entrada.trim().toLowerCase().startsWith('mkdisk')) {
             // Establecer el mensaje
             this.mensaje = 'Comando de MKDISK logrado con éxito';
-          } else {
+            // Mostrar el modal de éxito
+            this.showModal();
+          
+          } else if (this.entrada.trim().toLowerCase().startsWith('rmdisk')) {
+            // Establecer el mensaje
+            this.mensaje = 'Comando de RMDISK logrado con éxito';
+            // Mostrar el modal de éxito
+            this.showModal();
+
+          }
+          else {
             this.mensaje = ''; // Limpiar el mensaje si no es mkdisk
           }
 
@@ -69,7 +79,28 @@ export class AppComponent {
         } else {
           this.salida = 'Error desconocido';
         }
+        // Mostrar el mensaje de error en el modal solo si coincide con las frases específicas
+        if (this.salida.startsWith('Error: el archivo no existe') || this.salida.startsWith('Error: error al eliminar el archivo') || this.salida.startsWith('Archivo eliminado con éxito')) {
+          this.mensaje = this.salida;
+          this.showModal();
+        }
+        
       }
     });
   }
+
+  showModal(): void {
+    const modal = document.getElementById('successModal');
+    if (modal) {
+      modal.style.display = 'block';
+    }
+  }
+
+  closeModal(): void {
+    const modal = document.getElementById('successModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
 }
