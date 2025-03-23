@@ -3,6 +3,9 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 func ConvertToBytes(size int, unit string) (int, error) {
@@ -49,4 +52,23 @@ func GetLetterAndPartitionCorrelative(path string) (string, int, error) {
 	nextIndex := pathToPartitionCount[path]
 
 	return pathToLetter[path], nextIndex, nil
+}
+// createParentDirs crea las carpetas padre si no existen
+func CreateParentDirs(path string) error {
+	dir := filepath.Dir(path)
+	// os.MkdirAll no sobrescribe las carpetas existentes, solo crea las que no existen
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error al crear las carpetas padre: %v", err)
+	}
+	return nil
+}
+
+// getFileNames obtiene el nombre del archivo .dot y el nombre de la imagen de salida
+func GetFileNames(path string) (string, string) {
+	dir := filepath.Dir(path)
+	baseName := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	dotFileName := filepath.Join(dir, baseName+".dot")
+	outputImage := path
+	return dotFileName, outputImage
 }

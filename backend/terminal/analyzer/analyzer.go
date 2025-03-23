@@ -36,6 +36,9 @@ func Analyzer(input string) (interface{}, error) {
 	case "mkfs":
 		// Llama a la función CommandMkfs del paquete commands con los argumentos restantes
 		return commands.ParseMkfs(tokens[1:])
+	case "rep":
+		// Llama a la función CommandRep del paquete commands con los argumentos restantes
+		return commands.ParseRep(tokens[1:])
 	default:
 		// Si el comando no es reconocido, devuelve un error
 		return nil, fmt.Errorf("comando desconocido: %s", tokens[0])
