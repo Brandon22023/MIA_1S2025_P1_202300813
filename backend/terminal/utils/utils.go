@@ -24,21 +24,29 @@ var alphabet = []string{
 // Mapa para almacenar la asignación de letras a los diferentes paths
 var pathToLetter = make(map[string]string)
 
+// Mapa para almacenar el contador de particiones por path
+var pathToPartitionCount = make(map[string]int)
+
 // Índice para la siguiente letra disponible en el abecedario
 var nextLetterIndex = 0
 
-// GetLetter obtiene la letra asignada a un path
-func GetLetter(path string) (string, error) {
+// GetLetter obtiene la letra asignada a un path y el siguiente índice de partición
+func GetLetterAndPartitionCorrelative(path string) (string, int, error) {
 	// Asignar una letra al path si no tiene una asignada
 	if _, exists := pathToLetter[path]; !exists {
 		if nextLetterIndex < len(alphabet) {
 			pathToLetter[path] = alphabet[nextLetterIndex]
+			pathToPartitionCount[path] = 0 // Inicializar el contador de particiones
 			nextLetterIndex++
 		} else {
 			fmt.Println("Error: no hay más letras disponibles para asignar")
-			return "", errors.New("no hay más letras disponibles para asignar")
+			return "", 0, errors.New("no hay más letras disponibles para asignar")
 		}
 	}
 
-	return pathToLetter[path], nil
+	// Incrementar y obtener el siguiente índice de partición para este path
+	pathToPartitionCount[path]++
+	nextIndex := pathToPartitionCount[path]
+
+	return pathToLetter[path], nextIndex, nil
 }
