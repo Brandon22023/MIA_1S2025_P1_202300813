@@ -21,7 +21,7 @@ func Analyzer(input string) (interface{}, error) {
 	switch tokens[0] {
 	case "mkdir":
 		// Llama a la función Mkdir del paquete commands con los argumentos restantes
-		return ParseMkdir(tokens[1:])
+		return commands.ParseMkdir(tokens[1:])
     case "mkdisk":
 		// Llama a la función ParseMkdisk del paquete commands con los argumentos restantes
 		return commands.ParseMkdisk(tokens[1:])

@@ -84,6 +84,12 @@ export class AppComponent {
             // Mostrar el modal de éxito
             this.showModal();
 
+          }else if (this.entrada.trim().toLowerCase().startsWith('mkdir')) {
+            // Establecer el mensaje
+            this.mensaje = 'Comando de MKDIR logrado con éxito';
+            // Mostrar el modal de éxito
+            this.showModal();
+
           }
           else {
             this.mensaje = ''; // Limpiar el mensaje si no es mkdisk

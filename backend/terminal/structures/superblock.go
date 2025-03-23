@@ -89,180 +89,6 @@ func (sb *SuperBlock) Deserialize(path string, offset int64) error {
 	return nil
 }
 
-// Crear users.txt
-func (sb *SuperBlock) CreateUsersFile(path string) error {
-	// ----------- Creamos / -----------
-	// Creamos el inodo raíz
-	rootInode := &Inode{
-		I_uid:   1,
-		I_gid:   1,
-		I_size:  0,
-		I_atime: float32(time.Now().Unix()),
-		I_ctime: float32(time.Now().Unix()),
-		I_mtime: float32(time.Now().Unix()),
-		I_block: [15]int32{sb.S_blocks_count, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-		I_type:  [1]byte{'0'},
-		I_perm:  [3]byte{'7', '7', '7'},
-	}
-
-	// Serializar el inodo raíz
-	err := rootInode.Serialize(path, int64(sb.S_first_ino))
-	if err != nil {
-		return err
-	}
-
-	// Actualizar el bitmap de inodos
-	err = sb.UpdateBitmapInode(path)
-	if err != nil {
-		return err
-	}
-
-	// Actualizar el superbloque
-	sb.S_inodes_count++
-	sb.S_free_inodes_count--
-	sb.S_first_ino += sb.S_inode_size
-
-	// Creamos el bloque del Inodo Raíz
-	rootBlock := &FolderBlock{
-		B_content: [4]FolderContent{
-			{B_name: [12]byte{'.'}, B_inodo: 0},
-			{B_name: [12]byte{'.', '.'}, B_inodo: 0},
-			{B_name: [12]byte{'-'}, B_inodo: -1},
-			{B_name: [12]byte{'-'}, B_inodo: -1},
-		},
-	}
-
-	// Actualizar el bitmap de bloques
-	err = sb.UpdateBitmapBlock(path)
-	if err != nil {
-		return err
-	}
-
-	// Serializar el bloque de carpeta raíz
-	err = rootBlock.Serialize(path, int64(sb.S_first_blo))
-	if err != nil {
-		return err
-	}
-
-	// Actualizar el superbloque
-	sb.S_blocks_count++
-	sb.S_free_blocks_count--
-	sb.S_first_blo += sb.S_block_size
-
-	// Verificar el inodo raíz
-	fmt.Println("\nInodo Raíz:")
-	rootInode.Print()
-
-	// Verificar el bloque de carpeta raíz
-	fmt.Println("\nBloque de Carpeta Raíz:")
-	rootBlock.Print()
-
-	// ----------- Creamos /users.txt -----------
-	usersText := "1,G,root\n1,U,root,123\n"
-
-	// Deserializar el inodo raíz
-	err = rootInode.Deserialize(path, int64(sb.S_inode_start+0)) // 0 porque es el inodo raíz
-	if err != nil {
-		return err
-	}
-
-	// Actualizamos el inodo raíz
-	rootInode.I_atime = float32(time.Now().Unix())
-
-	// Serializar el inodo raíz
-	err = rootInode.Serialize(path, int64(sb.S_inode_start+0)) // 0 porque es el inodo raíz
-	if err != nil {
-		return err
-	}
-
-	// Deserializar el bloque de carpeta raíz
-	err = rootBlock.Deserialize(path, int64(sb.S_block_start+0)) // 0 porque es el bloque de carpeta raíz
-	if err != nil {
-		return err
-	}
-
-	// Actualizamos el bloque de carpeta raíz
-	rootBlock.B_content[2] = FolderContent{B_name: [12]byte{'u', 's', 'e', 'r', 's', '.', 't', 'x', 't'}, B_inodo: sb.S_inodes_count}
-
-	// Serializar el bloque de carpeta raíz
-	err = rootBlock.Serialize(path, int64(sb.S_block_start+0)) // 0 porque es el bloque de carpeta raíz
-	if err != nil {
-		return err
-	}
-
-	// Creamos el inodo users.txt
-	usersInode := &Inode{
-		I_uid:   1,
-		I_gid:   1,
-		I_size:  int32(len(usersText)),
-		I_atime: float32(time.Now().Unix()),
-		I_ctime: float32(time.Now().Unix()),
-		I_mtime: float32(time.Now().Unix()),
-		I_block: [15]int32{sb.S_blocks_count, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-		I_type:  [1]byte{'1'},
-		I_perm:  [3]byte{'7', '7', '7'},
-	}
-
-	// Actualizar el bitmap de inodos
-	err = sb.UpdateBitmapInode(path)
-	if err != nil {
-		return err
-	}
-
-	// Serializar el inodo users.txt
-	err = usersInode.Serialize(path, int64(sb.S_first_ino))
-	if err != nil {
-		return err
-	}
-
-	// Actualizamos el superbloque
-	sb.S_inodes_count++
-	sb.S_free_inodes_count--
-	sb.S_first_ino += sb.S_inode_size
-
-	// Creamos el bloque de users.txt
-	usersBlock := &FileBlock{
-		B_content: [64]byte{},
-	}
-	// Copiamos el texto de usuarios en el bloque
-	copy(usersBlock.B_content[:], usersText)
-
-	// Serializar el bloque de users.txt
-	err = usersBlock.Serialize(path, int64(sb.S_first_blo))
-	if err != nil {
-		return err
-	}
-
-	// Actualizar el bitmap de bloques
-	err = sb.UpdateBitmapBlock(path)
-	if err != nil {
-		return err
-	}
-
-	// Actualizamos el superbloque
-	sb.S_blocks_count++
-	sb.S_free_blocks_count--
-	sb.S_first_blo += sb.S_block_size
-
-	// Verificar el inodo raíz
-	fmt.Println("\nInodo Raíz Actualizado:")
-	rootInode.Print()
-
-	// Verificar el bloque de carpeta raíz
-	fmt.Println("\nBloque de Carpeta Raíz Actualizado:")
-	rootBlock.Print()
-
-	// Verificar el inodo users.txt
-	fmt.Println("\nInodo users.txt:")
-	usersInode.Print()
-
-	// Verificar el bloque de users.txt
-	fmt.Println("\nBloque de users.txt:")
-	usersBlock.Print()
-
-	return nil
-}
-
 // PrintSuperBlock imprime los valores de la estructura SuperBlock
 func (sb *SuperBlock) Print() {
 	// Convertir el tiempo de montaje a una fecha
@@ -354,6 +180,23 @@ func (sb *SuperBlock) PrintBlocks(path string) error {
 				continue
 			}
 
+		}
+	}
+
+	return nil
+}
+// CreateFolder crea una carpeta en el sistema de archivos
+func (sb *SuperBlock) CreateFolder(path string, parentsDir []string, destDir string) error {
+	// Si parentsDir está vacío, solo trabajar con el primer inodo que sería el raíz "/"
+	if len(parentsDir) == 0 {
+		return sb.createFolderInInode(path, 0, parentsDir, destDir)
+	}
+
+	// Iterar sobre cada inodo ya que se necesita buscar el inodo padre
+	for i := int32(0); i < sb.S_inodes_count; i++ {
+		err := sb.createFolderInInode(path, i, parentsDir, destDir)
+		if err != nil {
+			return err
 		}
 	}
 

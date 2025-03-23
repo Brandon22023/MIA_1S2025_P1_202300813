@@ -53,6 +53,7 @@ func GetLetterAndPartitionCorrelative(path string) (string, int, error) {
 
 	return pathToLetter[path], nextIndex, nil
 }
+
 // createParentDirs crea las carpetas padre si no existen
 func CreateParentDirs(path string) error {
 	dir := filepath.Dir(path)
@@ -71,4 +72,55 @@ func GetFileNames(path string) (string, string) {
 	dotFileName := filepath.Join(dir, baseName+".dot")
 	outputImage := path
 	return dotFileName, outputImage
+}
+// GetParentDirectories obtiene las carpetas padres y el directorio de destino
+func GetParentDirectories(path string) ([]string, string) {
+	// Normalizar el path
+	path = filepath.Clean(path)
+
+	// Dividir el path en sus componentes
+	components := strings.Split(path, string(filepath.Separator))
+
+	// Lista para almacenar las rutas de las carpetas padres
+	var parentDirs []string
+
+	// Construir las rutas de las carpetas padres, excluyendo la última carpeta
+	for i := 1; i < len(components)-1; i++ {
+		parentDirs = append(parentDirs, components[i])
+	}
+
+	// La última carpeta es la carpeta de destino
+	destDir := components[len(components)-1]
+
+	return parentDirs, destDir
+}
+
+// First devuelve el primer elemento de un slice
+func First[T any](slice []T) (T, error) {
+	if len(slice) == 0 {
+		var zero T
+		return zero, errors.New("el slice está vacío")
+	}
+	return slice[0], nil
+}
+
+// RemoveElement elimina un elemento de un slice en el índice dado
+func RemoveElement[T any](slice []T, index int) []T {
+	if index < 0 || index >= len(slice) {
+		return slice // Índice fuera de rango, devolver el slice original
+	}
+	return append(slice[:index], slice[index+1:]...)
+}
+
+// splitStringIntoChunks divide una cadena en partes de tamaño chunkSize y las almacena en una lista
+func SplitStringIntoChunks(s string) []string {
+	var chunks []string
+	for i := 0; i < len(s); i += 64 {
+		end := i + 64
+		if end > len(s) {
+			end = len(s)
+		}
+		chunks = append(chunks, s[i:end])
+	}
+	return chunks
 }
