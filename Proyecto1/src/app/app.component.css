@@ -1,3 +1,76 @@
+@keyframes color-change-blue {
+  0% { background-color: rgba(0, 123, 255, 0.6); }
+  7% { background-color: rgba(0, 105, 217, 0.6); }
+  14% { background-color: rgba(0, 87, 179, 0.6); }
+  21% { background-color: rgba(0, 69, 141, 0.6); }
+  28% { background-color: rgba(0, 51, 103, 0.6); }
+  35% { background-color: rgba(0, 33, 65, 0.6); }
+  42% { background-color: rgba(0, 15, 27, 0.6); }
+  49% { background-color: rgba(0, 69, 141, 0.6); }
+  56% { background-color: rgba(0, 87, 179, 0.6); }
+  63% { background-color: rgba(0, 105, 217, 0.6); }
+  70% { background-color: rgba(0, 123, 255, 0.6); }
+  77% { background-color: rgba(0, 110, 230, 0.6); }
+  84% { background-color: rgba(0, 95, 200, 0.6); }
+  91% { background-color: rgba(0, 80, 170, 0.6); }
+  100% { background-color: rgba(0, 70, 150, 0.6); }
+}
+
+@keyframes color-change-green {
+  0% { background-color: rgba(40, 167, 69, 0.6); }
+  7% { background-color: rgba(34, 142, 59, 0.6); }
+  14% { background-color: rgba(28, 117, 49, 0.6); }
+  21% { background-color: rgba(22, 92, 39, 0.6); }
+  28% { background-color: rgba(16, 67, 29, 0.6); }
+  35% { background-color: rgba(10, 42, 19, 0.6); }
+  42% { background-color: rgba(4, 17, 9, 0.6); }
+  49% { background-color: rgba(22, 92, 39, 0.6); }
+  56% { background-color: rgba(28, 117, 49, 0.6); }
+  63% { background-color: rgba(34, 142, 59, 0.6); }
+  70% { background-color: rgba(40, 167, 69, 0.6); }
+  77% { background-color: rgba(35, 150, 62, 0.6); }
+  84% { background-color: rgba(30, 130, 54, 0.6); }
+  91% { background-color: rgba(25, 110, 47, 0.6); }
+  100% { background-color: rgba(20, 95, 40, 0.6); }
+}
+
+@keyframes color-change-red {
+  0% { background-color: rgba(220, 53, 69, 0.6); }
+  7% { background-color: rgba(187, 45, 59, 0.6); }
+  14% { background-color: rgba(154, 37, 49, 0.6); }
+  21% { background-color: rgba(121, 29, 39, 0.6); }
+  28% { background-color: rgba(88, 21, 29, 0.6); }
+  35% { background-color: rgba(55, 13, 19, 0.6); }
+  42% { background-color: rgba(22, 5, 9, 0.6); }
+  49% { background-color: rgba(121, 29, 39, 0.6); }
+  56% { background-color: rgba(154, 37, 49, 0.6); }
+  63% { background-color: rgba(187, 45, 59, 0.6); }
+  70% { background-color: rgba(220, 53, 69, 0.6); }
+  77% { background-color: rgba(200, 50, 65, 0.6); }
+  84% { background-color: rgba(170, 45, 58, 0.6); }
+  91% { background-color: rgba(140, 40, 52, 0.6); }
+  100% { background-color: rgba(120, 35, 48, 0.6); }
+}
+
+
+.btn-elegir-archivo {
+  animation: color-change-blue 4s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.7); /* Borde blanco con opacidad */
+  color: white; /* Color del texto */
+}
+
+.btn-ejecutar {
+  animation: color-change-green 4s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.7); /* Borde blanco con opacidad */
+  color: white; /* Color del texto */
+}
+
+.btn-limpiar {
+  animation: color-change-red 4s infinite;
+  border: 2px solid rgba(255, 255, 255, 0.7); /* Borde blanco con opacidad */
+  color: white; /* Color del texto */
+}
+
 .textarea-container {
     display: flex;
     position: relative;
@@ -19,7 +92,7 @@
   }
 
   .entrada-textarea, .salida-textarea {
-    background-color: rgb(70, 79, 99);
+    background-color: rgba(70, 79, 99, 0.8);
     color: white;
   }
 
@@ -58,3 +131,7 @@
   text-decoration: none;
   cursor: pointer;
 }
+.mb-3 {
+  color: #aaa;
+}
+
