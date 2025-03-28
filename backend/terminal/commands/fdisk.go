@@ -8,6 +8,8 @@ import (
 	"regexp"  // Paquete para trabajar con expresiones regulares, útil para encontrar y manipular patrones en cadenas
 	"strconv" // Paquete para convertir cadenas a otros tipos de datos, como enteros
 	"strings" // Paquete para manipular cadenas, como unir, dividir, y modificar contenido de cadenas
+	"encoding/binary" // Agregar esta línea
+	"os" // Agregar esta línea
 )
 
 // FDISK estructura que representa el comando fdisk con sus parámetros
@@ -149,9 +151,22 @@ func commandFdisk(fdisk *FDISK) error {
 			return err
 		}
 	} else if fdisk.typ == "E" {
-		fmt.Println("Creando partición extendida...") // Les toca a ustedes implementar la partición extendida
+        fmt.Println("Creando partición extendida...")
+        // Llamar al método para crear la partición extendida
+        err = createExtendedPartition(fdisk, sizeBytes)
+        if err != nil {
+            fmt.Println("Error creando partición extendida:", err)
+            return err
+        } // Les toca a ustedes implementar la partición extendida
 	} else if fdisk.typ == "L" {
-		fmt.Println("Creando partición lógica...") // Les toca a ustedes implementar la partición lógica
+		fmt.Println("Creando partición lógica...")
+        // Llamar al método CreateLogicalPartition del paquete structures
+        err = CreateLogicalPartition(fdisk.path, int32(sizeBytes), fdisk.fit, fdisk.name)
+        if err != nil {
+            fmt.Println("Error creando partición lógica:", err)
+            return err
+        }
+		
 	}
 
 	return nil
@@ -207,4 +222,155 @@ func createPrimaryPartition(fdisk *FDISK, sizeBytes int) error {
 	}
 
 	return nil
+}
+
+
+func createExtendedPartition(fdisk *FDISK, sizeBytes int) error {
+    // Crear una instancia de MBR
+    var mbr structures.MBR
+
+    // Deserializar la estructura MBR desde un archivo binario
+    err := mbr.DeserializeMBR(fdisk.path)
+    if err != nil {
+        return fmt.Errorf("error deserializando el MBR: %v", err)
+    }
+
+    // Verificar si ya existe una partición extendida
+    for _, partition := range mbr.Mbr_partitions {
+        if partition.Part_type == [1]byte{'E'} {
+            return errors.New("ya existe una partición extendida")
+			
+        }
+    }
+
+    // Obtener la primera partición disponible
+    availablePartition, startPartition, indexPartition := mbr.GetFirstAvailablePartition()
+    if availablePartition == nil {
+        return errors.New("no hay particiones disponibles")
+    }
+
+    // Crear la partición extendida con los parámetros proporcionados
+    availablePartition.CreatePartition(startPartition, sizeBytes, fdisk.typ, fdisk.fit, fdisk.name)
+    availablePartition.Part_type = [1]byte{'E'}
+
+    // Crear el primer EBR dentro de la partición extendida
+    var ebr structures.EBR
+    ebr.CreatePartition(int32(startPartition)+int32(binary.Size(mbr)), 30, "F", "") // El tamaño inicial del EBR es 30 bytes
+
+    // Serializar el EBR en el archivo binario
+    err = ebr.SerializeEBR(fdisk.path, int64(startPartition))
+    if err != nil {
+        return fmt.Errorf("error serializando el EBR: %v", err)
+    }
+
+    // Colocar la partición en el MBR
+    mbr.Mbr_partitions[indexPartition] = *availablePartition
+
+    // Imprimir las particiones del MBR
+    fmt.Println("\nParticiones del MBR:")
+    mbr.PrintPartitions()
+
+    // Imprimir el EBR creado
+    fmt.Println("\nEBR creado:")
+    ebr.PrintEBR()
+
+	
+
+
+    // Serializar el MBR en el archivo binario
+    err = mbr.SerializeMBR(fdisk.path)
+    if err != nil {
+        return fmt.Errorf("error serializando el MBR: %v", err)
+    }
+
+    return nil
+}
+
+func CreateLogicalPartition(path string, size int32, fit string, name string) error {
+    file, err := os.OpenFile(path, os.O_RDWR, 0644)
+    if err != nil {
+        return fmt.Errorf("error abriendo el archivo: %v", err)
+    }
+    defer file.Close()
+
+    var ebr structures.EBR
+    offset := int64(0)
+
+    // Leer el primer EBR de la partición extendida
+    err = ebr.DeserializeEBR(path, offset)
+    if err != nil {
+        return fmt.Errorf("error leyendo el primer EBR: %v", err)
+    }
+
+    // Recorrer la lista enlazada de EBRs para encontrar el último
+    for ebr.Part_next != -1 {
+        offset = int64(ebr.Part_next)
+        err = ebr.DeserializeEBR(path, offset)
+        if err != nil {
+            return fmt.Errorf("error leyendo el siguiente EBR: %v", err)
+        }
+    }
+
+    // Calcular el inicio de la nueva partición lógica
+    newPartitionStart := ebr.Part_start + ebr.Part_size + int32(binary.Size(ebr))
+
+    // Verificar si hay suficiente espacio en la partición extendida
+    if newPartitionStart+size > ebr.Part_start+ebr.Part_size {
+        return errors.New("no hay suficiente espacio en la partición extendida para crear la partición lógica")
+    }
+
+    // Crear el nuevo EBR para la partición lógica
+    newEBR := structures.EBR{}
+    err = newEBR.CreatePartition(newPartitionStart, size, fit, name)
+    if err != nil {
+        return fmt.Errorf("error creando el nuevo EBR: %v", err)
+    }
+
+    // Actualizar el puntero `Part_next` del EBR actual
+    ebr.Part_next = newPartitionStart
+    err = ebr.SerializeEBR(path, offset)
+    if err != nil {
+        return fmt.Errorf("error actualizando el EBR actual: %v", err)
+    }
+
+    // Escribir el nuevo EBR en el archivo
+    err = newEBR.SerializeEBR(path, int64(newPartitionStart))
+    if err != nil {
+        return fmt.Errorf("error escribiendo el nuevo EBR: %v", err)
+    }
+
+    fmt.Println("Partición lógica creada exitosamente.")
+    return nil
+
+}
+func printLogicalPartitions(path string, start int32) error {
+    var ebr structures.EBR
+    offset := int64(start)
+
+    fmt.Println("\nParticiones lógicas dentro de la partición extendida:")
+	if ebr.Part_size == 0 && ebr.Part_next == -1 {
+		fmt.Println("No hay particiones lógicas creadas aún.")
+		return nil
+	}
+
+    for {
+        // Leer el EBR desde el archivo
+        err := ebr.DeserializeEBR(path, offset)
+        if err != nil {
+            return fmt.Errorf("error leyendo el EBR en offset %d: %v", offset, err)
+        }
+
+        // Imprimir la información del EBR
+        ebr.PrintEBR()
+
+        // Verificar si hay un siguiente EBR
+        if ebr.Part_next == -1 {
+            break // No hay más particiones lógicas
+        }
+
+        // Mover al siguiente EBR
+        offset = int64(ebr.Part_next)
+    }
+
+    return nil
 }

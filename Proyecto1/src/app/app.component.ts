@@ -104,10 +104,16 @@ export class AppComponent {
         // Manejo mejorado del error
         if (error.error && error.error.error) {
           this.salida = `Error: ${error.error.error}`;
+          this.mensaje = this.salida;
+          this.showModal();
         } else if (error.message) {
           this.salida = `Error: ${error.message}`;
+          this.mensaje = this.salida;
+          this.showModal();
         } else {
           this.salida = 'Error desconocido';
+          this.mensaje = this.salida;
+          this.showModal();
         }
         // Mostrar el mensaje de error en el modal solo si coincide con las frases específicas
         if (this.salida.startsWith('Error: el archivo no existe') || this.salida.startsWith('Error: error al eliminar el archivo') || this.salida.startsWith('Archivo eliminado con éxito')) {
