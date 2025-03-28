@@ -43,9 +43,12 @@ export class AppComponent {
   ejecutar(): void {
     this.analyzerService.analyze(this.entrada).subscribe({
       next: (response) => {
+        // Imprime la respuesta en la consola
+        console.log('Respuesta del servidor:', response);
         // Asegúrate de que la respuesta tenga la estructura esperada
-        if (response && response.command) {
-          this.salida = JSON.stringify(response.command, null, 2);
+        if (response && response.output) {
+          this.salida = response.output;
+          console.log('Salida procesada:', this.salida);
 
           // Verificar si el comando es mkdisk
           if (this.entrada.trim().toLowerCase().startsWith('mkdisk')) {
@@ -97,10 +100,14 @@ export class AppComponent {
 
         } else {
           this.salida = 'Respuesta inesperada del servidor';
+
           this.mensaje = ''; // Limpiar el mensaje en caso de error
         }
       },
       error: (error) => {
+
+        // Manejo mejorado del error
+        console.error('Error del servidor:', error);
         // Manejo mejorado del error
         if (error.error && error.error.error) {
           this.salida = `Error: ${error.error.error}`;

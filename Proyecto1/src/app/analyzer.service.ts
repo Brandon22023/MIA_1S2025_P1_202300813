@@ -11,6 +11,7 @@ export class AnalyzerService {
   constructor(private http: HttpClient) {}
 
   analyze(input: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl, input);
+    console.log('Enviando al servidor:', { command: input }); // Verifica el comando enviado
+    return this.http.post<any>(this.apiUrl, { command: input });
   }
 }

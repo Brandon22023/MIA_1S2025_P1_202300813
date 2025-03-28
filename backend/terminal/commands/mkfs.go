@@ -16,6 +16,7 @@ import (
 type MKFS struct {
 	id  string // ID del disco
 	typ string // Tipo de formato (full)
+	fs  string // Sistema de archivos (2fs o 3fs)
 }
 
 /*
@@ -23,7 +24,7 @@ type MKFS struct {
    mkfs -id=vd2
 */
 
-func ParseMkfs(tokens []string) (*MKFS, error) {
+func ParseMkfs(tokens []string) (string, error) {
 	cmd := &MKFS{} // Crea una nueva instancia de MKFS
 
 	// Unir tokens en una sola cadena y luego dividir por espacios, respetando las comillas
@@ -38,7 +39,7 @@ func ParseMkfs(tokens []string) (*MKFS, error) {
 		// Divide cada parte en clave y valor usando "=" como delimitador
 		kv := strings.SplitN(match, "=", 2)
 		if len(kv) != 2 {
-			return nil, fmt.Errorf("formato de parámetro inválido: %s", match)
+			return "", fmt.Errorf("formato de parámetro inválido: %s", match)
 		}
 		key, value := strings.ToLower(kv[0]), kv[1]
 
@@ -52,24 +53,24 @@ func ParseMkfs(tokens []string) (*MKFS, error) {
 		case "-id":
 			// Verifica que el id no esté vacío
 			if value == "" {
-				return nil, errors.New("el id no puede estar vacío")
+				return "", errors.New("el id no puede estar vacío")
 			}
 			cmd.id = value
 		case "-type":
 			// Verifica que el tipo sea "full"
 			if value != "full" {
-				return nil, errors.New("el tipo debe ser full")
+				return "", errors.New("el tipo debe ser full")
 			}
 			cmd.typ = value
 		default:
 			// Si el parámetro no es reconocido, devuelve un error
-			return nil, fmt.Errorf("parámetro desconocido: %s", key)
+			return "", fmt.Errorf("parámetro desconocido: %s", key)
 		}
 	}
 
 	// Verifica que el parámetro -id haya sido proporcionado
 	if cmd.id == "" {
-		return nil, errors.New("faltan parámetros requeridos: -id")
+		return "", errors.New("faltan parámetros requeridos: -id")
 	}
 
 	// Si no se proporcionó el tipo, se establece por defecto a "full"
@@ -77,13 +78,24 @@ func ParseMkfs(tokens []string) (*MKFS, error) {
 		cmd.typ = "full"
 	}
 
+	// Si no se proporcionó el sistema de archivos, se establece por defecto a "2fs"
+	if cmd.fs == "" {
+		cmd.fs = "2fs"
+	}
+
 	// Aquí se puede agregar la lógica para ejecutar el comando mkfs con los parámetros proporcionados
 	err := commandMkfs(cmd)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("", err)
 	}
 
-	return cmd, nil // Devuelve el comando MKFS creado
+	return fmt.Sprintf("MKFS: Sistema de archivos creado exitosamente\n"+
+		"-> ID: %s\n"+
+		"-> Tipo: %s\n"+
+		"-> Sistema de archivos: %s",
+		cmd.id,
+		cmd.typ,
+		map[string]string{"2fs": "EXT2", "3fs": "EXT3"}[cmd.fs]), nil
 }
 
 func commandMkfs(mkfs *MKFS) error {

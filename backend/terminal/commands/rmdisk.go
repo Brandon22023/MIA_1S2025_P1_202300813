@@ -17,7 +17,7 @@ type RMDISK struct {
    rmdisk -path="/home/mis discos/Disco4.mia"
 */
 
-func ParseRmdisk(tokens []string) (*RMDISK, error) {
+func ParseRmdisk(tokens []string) (string, error) {
     cmd := &RMDISK{} // Crea una nueva instancia de RMDISK
 
     // Unir tokens en una sola cadena y luego dividir por espacios, respetando las comillas
@@ -32,7 +32,7 @@ func ParseRmdisk(tokens []string) (*RMDISK, error) {
         // Divide cada parte en clave y valor usando "=" como delimitador
         kv := strings.SplitN(match, "=", 2)
         if len(kv) != 2 {
-            return nil, fmt.Errorf("formato de parámetro inválido: %s", match)
+            return "", fmt.Errorf("formato de parámetro inválido: %s", match)
         }
         key, value := strings.ToLower(kv[0]), kv[1]
 
@@ -46,27 +46,30 @@ func ParseRmdisk(tokens []string) (*RMDISK, error) {
         case "-path":
             // Verifica que el path no esté vacío
             if value == "" {
-                return nil, errors.New("el path no puede estar vacío")
+                return "", errors.New("el path no puede estar vacío")
             }
             cmd.path = value
         default:
             // Si el parámetro no es reconocido, devuelve un error
-            return nil, fmt.Errorf("parámetro desconocido: %s", key)
+            return "", fmt.Errorf("parámetro desconocido: %s", key)
         }
     }
 
     // Verifica que el parámetro -path haya sido proporcionado
     if cmd.path == "" {
-        return nil, errors.New("faltan parámetros requeridos: -path")
+        return "", errors.New("faltan parámetros requeridos: -path")
     }
 
     // Eliminar el disco con los parámetros proporcionados
     err := commandRmdisk(cmd)
     if err != nil {
-        return nil, err
+        return "", err
     }
 
-    return cmd, nil // Devuelve el comando RMDISK creado
+    // Devuelve un mensaje de éxito con los detalles del disco creado
+	return fmt.Sprintf("RMDISK: Disco eliminado exitosamente\n"+
+    "-> Path: %s\n",
+    cmd.path), nil
 }
 
 func commandRmdisk(rmdisk *RMDISK) error {

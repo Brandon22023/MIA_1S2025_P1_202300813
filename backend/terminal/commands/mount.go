@@ -25,7 +25,7 @@ type MOUNT struct {
 */
 
 // CommandMount parsea el comando mount y devuelve una instancia de MOUNT
-func ParseMount(tokens []string) (*MOUNT, error) {
+func ParseMount(tokens []string) (string, error) {
 	cmd := &MOUNT{} // Crea una nueva instancia de MOUNT
 
 	// Unir tokens en una sola cadena y luego dividir por espacios, respetando las comillas
@@ -40,7 +40,7 @@ func ParseMount(tokens []string) (*MOUNT, error) {
 		// Divide cada parte en clave y valor usando "=" como delimitador
 		kv := strings.SplitN(match, "=", 2)
 		if len(kv) != 2 {
-			return nil, fmt.Errorf("formato de parámetro inválido: %s", match)
+			return "", fmt.Errorf("formato de parámetro inválido: %s", match)
 		}
 		key, value := strings.ToLower(kv[0]), kv[1]
 
@@ -54,27 +54,27 @@ func ParseMount(tokens []string) (*MOUNT, error) {
 		case "-path":
 			// Verifica que el path no esté vacío
 			if value == "" {
-				return nil, errors.New("el path no puede estar vacío")
+				return "", errors.New("el path no puede estar vacío")
 			}
 			cmd.path = value
 		case "-name":
 			// Verifica que el nombre no esté vacío
 			if value == "" {
-				return nil, errors.New("el nombre no puede estar vacío")
+				return "", errors.New("el nombre no puede estar vacío")
 			}
 			cmd.name = value
 		default:
 			// Si el parámetro no es reconocido, devuelve un error
-			return nil, fmt.Errorf("parámetro desconocido: %s", key)
+			return "", fmt.Errorf("parámetro desconocido: %s", key)
 		}
 	}
 
 	// Verifica que los parámetros -path y -name hayan sido proporcionados
 	if cmd.path == "" {
-		return nil, errors.New("faltan parámetros requeridos: -path")
+		return "", errors.New("faltan parámetros requeridos: -path")
 	}
 	if cmd.name == "" {
-		return nil, errors.New("faltan parámetros requeridos: -name")
+		return "", errors.New("faltan parámetros requeridos: -name")
 	}
 
 	// Montamos la partición
@@ -83,7 +83,12 @@ func ParseMount(tokens []string) (*MOUNT, error) {
 		fmt.Println("Error:", err)
 	}
 
-	return cmd, nil // Devuelve el comando MOUNT creado
+	// Devuelve un mensaje de éxito con los detalles del montaje
+	return fmt.Sprintf("MOUNT: Partición montada exitosamente\n"+
+	"-> Path: %s\n"+
+	"-> Nombre: %s\n"+
+	"-> ID: %s",
+	cmd.path, cmd.name, idPartition), nil
 }
 
 func commandMount(mount *MOUNT) error {
