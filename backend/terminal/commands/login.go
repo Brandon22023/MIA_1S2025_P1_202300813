@@ -97,11 +97,19 @@ func ParseLogin(tokens []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	return fmt.Sprintf("LOGIN: Usuario: %s, Contraseña: %s, ID: %s", cmd.user, cmd.pass, cmd.id), nil
+	return fmt.Sprintf("LOGIN: Iniciando sesion\n"+
+		"-> Usuario: %s\n"+
+		"-> Contraseña: %s\n"+
+		"-> ID: %s",
+		cmd.user, cmd.pass, cmd.id), nil
+	
 }
 
 func commandLogin(login *LOGIN) error {
+	// Verificar si ya hay una sesión activa
+    if stores.Auth.IsAuthenticated() {
+        return fmt.Errorf("ya hay una sesión iniciada con el usuario: %s", stores.Auth.Username)
+    }
 	// Obtener la partición montada
 	partitionSuperblock, _, partitionPath, err := stores.GetMountedPartitionSuperblock(login.id)
 	if err != nil {
@@ -163,4 +171,17 @@ func commandLogin(login *LOGIN) error {
 	stores.Auth.Login(login.user, login.pass, login.id)
 
 	return nil
+}
+
+func CommandLogout() (string, error) {
+    // Verificar si ya hay una sesión activa
+    if !stores.Auth.IsAuthenticated() {
+        return "", fmt.Errorf("no hay ninguna sesión activa")
+    }
+
+    // Cerrar la sesión
+    stores.Auth.Logout()
+    // Mensaje formateado
+	return fmt.Sprintf("LOGOUT: Sesión cerrada exitosamente\n"+
+		"-> Mensaje: La sesión ha sido cerrada correctamente"), nil
 }

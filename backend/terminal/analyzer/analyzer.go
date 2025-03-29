@@ -44,6 +44,8 @@ func Analyzer(input string) (string, error) {
 		return commands.ParseLogin(tokens[1:])
 	case "mounted":
 		return stores.PrintMountedPartitions()
+	case "logout":
+		return commands.CommandLogout()
 	default:
 		// Si el comando no es reconocido, devuelve un error
 		return "", fmt.Errorf("comando desconocido: %s", tokens[0])
