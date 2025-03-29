@@ -39,6 +39,8 @@ func Analyzer(input string) (string, error) {
 	case "rep":
 		// Llama a la función CommandRep del paquete commands con los argumentos restantes
 		return commands.ParseRep(tokens[1:])
+	case "login":
+		return commands.ParseLogin(tokens[1:])
 	default:
 		// Si el comando no es reconocido, devuelve un error
 		return "", fmt.Errorf("comando desconocido: %s", tokens[0])

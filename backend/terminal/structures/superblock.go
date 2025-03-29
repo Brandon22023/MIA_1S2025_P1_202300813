@@ -185,18 +185,68 @@ func (sb *SuperBlock) PrintBlocks(path string) error {
 
 	return nil
 }
-// CreateFolder crea una carpeta en el sistema de archivos
-func (sb *SuperBlock) CreateFolder(path string, parentsDir []string, destDir string) error {
-	// Si parentsDir está vacío, solo trabajar con el primer inodo que sería el raíz "/"
-	if len(parentsDir) == 0 {
-		return sb.createFolderInInode(path, 0, parentsDir, destDir)
+// Get users.txt block
+func (sb *SuperBlock) GetUsersBlock(path string) (*FileBlock, error) {
+	// Ir al inodo 1
+	inode := &Inode{}
+
+	// Deserializar el inodo
+	err := inode.Deserialize(path, int64(sb.S_inode_start+(1*sb.S_inode_size))) // 1 porque es el inodo 1
+	if err != nil {
+		return nil, err
 	}
 
-	// Iterar sobre cada inodo ya que se necesita buscar el inodo padre
-	for i := int32(0); i < sb.S_inodes_count; i++ {
-		err := sb.createFolderInInode(path, i, parentsDir, destDir)
-		if err != nil {
-			return err
+	// Iterar sobre cada bloque del inodo (apuntadores)
+	for _, blockIndex := range inode.I_block {
+		// Si el bloque no existe, salir
+		if blockIndex == -1 {
+			break
+		}
+		// Si el inodo es de tipo archivo
+		if inode.I_type[0] == '1' {
+			block := &FileBlock{}
+			// Deserializar el bloque
+			err := block.Deserialize(path, int64(sb.S_block_start+(blockIndex*sb.S_block_size))) // 64 porque es el tamaño de un bloque
+			if err != nil {
+				return nil, err
+			}
+			// Deben ir guardando todo el contenido de los bloques en una variable
+
+			// Retornar el bloque por temas explicativos
+			return block, nil
+		}
+	}
+	return nil, fmt.Errorf("users.txt block not found")
+}
+// CreateFolder crea una carpeta en el sistema de archivos
+func (sb *SuperBlock) CreateFolder(path string, parentsDir []string, destDir string) error {
+
+	// Validar el sistema de archivos
+	if sb.S_filesystem_type == 3 {
+		// Si parentsDir está vacío, solo trabajar con el primer inodo que sería el raíz "/"
+		if len(parentsDir) == 0 {
+			return sb.createFolderInInodeExt3(path, 0, parentsDir, destDir)
+		}
+
+		// Iterar sobre cada inodo ya que se necesita buscar el inodo padre
+		for i := int32(0); i < sb.S_inodes_count; i++ {
+			err := sb.createFolderInInodeExt3(path, i, parentsDir, destDir)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// Si parentsDir está vacío, solo trabajar con el primer inodo que sería el raíz "/"
+		if len(parentsDir) == 0 {
+			return sb.createFolderInInodeExt2(path, 0, parentsDir, destDir)
+		}
+
+		// Iterar sobre cada inodo ya que se necesita buscar el inodo padre
+		for i := int32(0); i < sb.S_inodes_count; i++ {
+			err := sb.createFolderInInodeExt2(path, i, parentsDir, destDir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

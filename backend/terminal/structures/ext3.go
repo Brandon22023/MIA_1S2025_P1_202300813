@@ -1,14 +1,16 @@
 package structures
 
 import (
-	utils "terminal/utils"
+	"terminal/utils"
 	"strings"
 	"time"
 )
 
 // Crear users.txt en nuestro sistema de archivos
-func (sb *SuperBlock) CreateUsersFileExt2(path string) error {
+func (sb *SuperBlock) CreateUsersFileExt3(path string, journauling_start int64) error {
 	// ----------- Creamos / -----------
+	// Crear Journal
+
 	// Creamos el inodo raíz
 	rootInode := &Inode{
 		I_uid:   1,
@@ -65,6 +67,22 @@ func (sb *SuperBlock) CreateUsersFileExt2(path string) error {
 	sb.S_blocks_count++
 	sb.S_free_blocks_count--
 	sb.S_first_blo += sb.S_block_size
+
+	journal := &Journal{
+		J_count: sb.S_inodes_count,
+		J_content: Information{
+			I_operation: [10]byte{'m', 'k', 'd', 'i', 'r'},
+			I_path:      [32]byte{'/'},
+			I_content:   [64]byte{},
+			I_date:      float32(time.Now().Unix()),
+		},
+	}
+
+	// Serializar el journal
+	err = journal.Serialize(path, journauling_start)
+	if err != nil {
+		return err
+	}
 
 	// ----------- Creamos /users.txt -----------
 	usersText := "1,G,root\n1,U,root,root,123\n"
@@ -129,6 +147,25 @@ func (sb *SuperBlock) CreateUsersFileExt2(path string) error {
 	sb.S_free_inodes_count--
 	sb.S_first_ino += sb.S_inode_size
 
+	// Crear Journal
+	journalFile := &Journal{
+		J_count: sb.S_inodes_count,
+		J_content: Information{
+			I_operation: [10]byte{'m', 'k', 'f', 'i', 'l', 'e'},
+			I_path:      [32]byte{'/', 'u', 's', 'e', 'r', 's', '.', 't', 'x', 't'},
+			I_content:   [64]byte{},
+			I_date:      float32(time.Now().Unix()),
+		},
+	}
+	// Copiamos el texto de usuarios en el journal
+	copy(journalFile.J_content.I_content[:], usersText)
+
+	// Serializar el journal
+	err = journalFile.Serialize(path, journauling_start)
+	if err != nil {
+		return err
+	}
+
 	// Creamos el bloque de users.txt
 	usersBlock := &FileBlock{
 		B_content: [64]byte{},
@@ -157,7 +194,7 @@ func (sb *SuperBlock) CreateUsersFileExt2(path string) error {
 }
 
 // createFolderInInode crea una carpeta en un inodo específico
-func (sb *SuperBlock) createFolderInInodeExt2(path string, inodeIndex int32, parentsDir []string, destDir string) error {
+func (sb *SuperBlock) createFolderInInodeExt3(path string, inodeIndex int32, parentsDir []string, destDir string) error {
 	// Crear un nuevo inodo
 	inode := &Inode{}
 	// Deserializar el inodo
@@ -214,7 +251,7 @@ func (sb *SuperBlock) createFolderInInodeExt2(path string, inodeIndex int32, par
 				if strings.EqualFold(contentName, parentDirName) {
 					//fmt.Println("---------LA ENCONTRÉ-------")
 					// Si son las mismas, entonces entramos al inodo que apunta el bloque
-					err := sb.createFolderInInodeExt2(path, content.B_inodo, utils.RemoveElement(parentsDir, 0), destDir)
+					err := sb.createFolderInInodeExt3(path, content.B_inodo, utils.RemoveElement(parentsDir, 0), destDir)
 					if err != nil {
 						return err
 					}
@@ -240,6 +277,8 @@ func (sb *SuperBlock) createFolderInInodeExt2(path string, inodeIndex int32, par
 				if err != nil {
 					return err
 				}
+
+				// HACER EL JOURNALING
 
 				// Crear el inodo de la carpeta
 				folderInode := &Inode{
@@ -270,6 +309,8 @@ func (sb *SuperBlock) createFolderInInodeExt2(path string, inodeIndex int32, par
 				sb.S_inodes_count++
 				sb.S_free_inodes_count--
 				sb.S_first_ino += sb.S_inode_size
+
+				// TODO: Ponen su Journal
 
 				// Crear el bloque de la carpeta
 				folderBlock := &FolderBlock{

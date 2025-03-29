@@ -350,6 +350,7 @@ func CreateLogicalPartition(path string, size int32, fit string, name string) er
     return nil
 
 }
+/*
 func printLogicalPartitions(path string, start int32) error {
     var ebr structures.EBR
     offset := int64(start)
@@ -381,3 +382,4 @@ func printLogicalPartitions(path string, start int32) error {
 
     return nil
 }
+*/

@@ -4,26 +4,8 @@ fdisk -size=1 -type=P -unit=M -fit=BF -name="Particion1" -path="/home/brandon/Es
 
 mount -name="Particion1" -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"
 
-mkfs -id=531A -fs=3fs
+mkfs -id=131A
 
-login -user=root -pass=123 -id=531A
+login -user=root -pass=123 -id=131A
 
-mkdir -path="/home"
-
-rep -id=531A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_inode.png" -name=inode
----------------------------------------------
-
-
-mkdisk -size=5 -unit=M -fit=WF -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"
-
-fdisk -size=1 -type=P -unit=M -fit=BF -name="Particion1" -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"
-
-mount -name="Particion1" -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"
-
-mkfs -id=531A -fs=3fs
-
-login -user=root -pass=123 -id=531A
-
-mkdir -path="/home"
-
-rep -id=531A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_inode.png" -name=inode
+rmdisk -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"
