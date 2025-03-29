@@ -3,6 +3,8 @@ package stores
 import (
 	structures "terminal/structures"
 	"errors"
+	"fmt"
+	"strings"
 )
 // Carnet de estudiante
 const Carnet string = "13" // 202300813
@@ -14,6 +16,26 @@ var (
 //imprimri para el mounted
 
 
+
+// ParseMounted verifica el comando y, si es válido, imprime las particiones montadas
+
+
+// PrintMountedPartitions devuelve el contenido de MountedPartitions como una cadena y un posible error
+func PrintMountedPartitions() (string, error) {
+    if len(MountedPartitions) == 0 {
+		return "", errors.New("no hay particiones montadas")
+    }
+
+    var result strings.Builder
+    result.WriteString("MOUNTED: Particiones montadas:\n")
+    for id:= range MountedPartitions {
+        result.WriteString(fmt.Sprintf("ID: %s\n", id))
+    }
+
+    return result.String(), nil
+}
+
+//---------------------------
 // GetMountedPartition obtiene la partición montada con el id especificado
 func GetMountedPartition(id string) (*structures.PARTITION, string, error) {
 	// Obtener el path de la partición montada

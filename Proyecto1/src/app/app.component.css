@@ -96,26 +96,78 @@
     color: white;
   }
 
-  /* Estilos para el modal */
-.modal {
-  display: none; /* Oculto por defecto */
-  position: fixed; /* Fijo en la pantalla */
-  z-index: 1; /* Por encima de otros elementos */
-  left: 0;
-  top: 0;
-  width: 100%; /* Ancho completo */
-  height: 100%; /* Alto completo */
-  overflow: auto; /* Desplazamiento si es necesario */
-  background-color: rgb(0,0,0); /* Color de fondo */
-  background-color: rgba(0,0,0,0.4); /* Fondo con opacidad */
+
+
+
+
+
+  
+/* Animación de entrada del modal */
+@keyframes slideDown {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
+/* Animación de salida del modal */
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+}
+
+/* Fondo oscuro y borroso para el modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro */
+  backdrop-filter: blur(4px); /* Efecto borroso */
+  -webkit-backdrop-filter: blur(4px); /* Compatibilidad con navegadores basados en WebKit */
+  display: none; /* Oculto por defecto */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0; /* Oculto por defecto */
+  transition: opacity 0.3s ease; /* Animación de apertura y cierre */
+}
+
+/* Mostrar el modal cuando se activa */
+.modal-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+/* Estilo del contenido del modal */
 .modal-content {
-  background-color: #fefefe;
-  margin: 15% auto; /* Centrado vertical y horizontal */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Ancho del contenido */
+  background-color: rgba(70, 79, 99, 0.8); /* Fondo similar al textarea */
+  color: white; /* Texto blanco */
+  border-radius: 12px;
+  padding: 25px;
+  width: 50%;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Sombra más pronunciada */
+  animation: slideDown 0.3s ease; /* Animación de entrada */
+  position: relative;
+  font-family: 'Times New Roman', Times, serif; /* Fuente consistente */
+}
+
+/* Aplicar animación de salida */
+.modal-content.fade-out {
+  animation: slideUp 0.3s ease; /* Animación de salida */
 }
 
 .close {
@@ -134,4 +186,5 @@
 .mb-3 {
   color: #aaa;
 }
+
 

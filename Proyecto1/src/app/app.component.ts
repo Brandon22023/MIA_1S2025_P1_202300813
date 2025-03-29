@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common'; // Importar CommonModule
   standalone: true
 })
 export class AppComponent {
+  isModalVisible: boolean = false; // Estado del modal
+  isModalClosing: boolean = false; // Estado de cierre del modal
   title = 'Proyecto1';
   entrada: string = '';
   salida: string = '';
@@ -35,115 +37,81 @@ export class AppComponent {
   }
 
   limpiar(): void {
+    this.playClickSound(); // Reproducir sonido al hacer clic en "Limpiar"
     this.entrada = '';
     this.salida = '';
     this.mensaje = ''; // Limpiar el mensaje
   }
 
   ejecutar(): void {
+    this.playClickSound(); // Reproducir sonido al hacer clic en "Ejecutar"
     this.analyzerService.analyze(this.entrada).subscribe({
       next: (response) => {
         // Imprime la respuesta en la consola
         console.log('Respuesta del servidor:', response);
+  
         // Asegúrate de que la respuesta tenga la estructura esperada
         if (response && response.output) {
           this.salida = response.output;
           console.log('Salida procesada:', this.salida);
-
-          // Verificar si el comando es mkdisk
-          if (this.entrada.trim().toLowerCase().startsWith('mkdisk')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de MKDISK logrado con éxito';
-            // Mostrar el modal de éxito
+  
+          // Verificar si la salida comienza con "Error"
+          if (this.salida.trim().toLowerCase().startsWith('error')) {
+            // Mostrar el mensaje de error en el modal
+            this.mensaje = this.salida;
             this.showModal();
-          
-          } else if (this.entrada.trim().toLowerCase().startsWith('rmdisk')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de RMDISK logrado con éxito';
-            // Mostrar el modal de éxito
+          } else {
+            // Mostrar mensaje de éxito si no hay errores
+            this.mensaje = 'Todos los comandos se ejecutaron con éxito';
             this.showModal();
-
-          }else if (this.entrada.trim().toLowerCase().startsWith('fdisk')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de FDISK logrado con éxito';
-            // Mostrar el modal de éxito
-            this.showModal();
-
-          }else if (this.entrada.trim().toLowerCase().startsWith('mount')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de MOUNT logrado con éxito';
-            // Mostrar el modal de éxito
-            this.showModal();
-
-          }else if (this.entrada.trim().toLowerCase().startsWith('mkfs')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de MKFS logrado con éxito';
-            // Mostrar el modal de éxito
-            this.showModal();
-
-          }else if (this.entrada.trim().toLowerCase().startsWith('rep')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de REP logrado con éxito';
-            // Mostrar el modal de éxito
-            this.showModal();
-
-          }else if (this.entrada.trim().toLowerCase().startsWith('mkdir')) {
-            // Establecer el mensaje
-            this.mensaje = 'Comando de MKDIR logrado con éxito';
-            // Mostrar el modal de éxito
-            this.showModal();
-
           }
-          else {
-            this.mensaje = ''; // Limpiar el mensaje si no es mkdisk
-          }
-
         } else {
+          // Si la respuesta no tiene la estructura esperada
           this.salida = 'Respuesta inesperada del servidor';
-
-          this.mensaje = ''; // Limpiar el mensaje en caso de error
+          this.mensaje = this.salida; // Mostrar el mensaje en el modal
+          this.showModal();
         }
       },
       error: (error) => {
-
-        // Manejo mejorado del error
+        // Manejo de errores
         console.error('Error del servidor:', error);
-        // Manejo mejorado del error
+  
         if (error.error && error.error.error) {
           this.salida = `Error: ${error.error.error}`;
-          this.mensaje = this.salida;
-          this.showModal();
         } else if (error.message) {
           this.salida = `Error: ${error.message}`;
-          this.mensaje = this.salida;
-          this.showModal();
         } else {
           this.salida = 'Error desconocido';
-          this.mensaje = this.salida;
-          this.showModal();
         }
-        // Mostrar el mensaje de error en el modal solo si coincide con las frases específicas
-        if (this.salida.startsWith('Error: el archivo no existe') || this.salida.startsWith('Error: error al eliminar el archivo') || this.salida.startsWith('Archivo eliminado con éxito')) {
-          this.mensaje = this.salida;
-          this.showModal();
-        }
-        
+  
+        // Mostrar el mensaje de error en el modal
+        this.mensaje = this.salida;
+        this.showModal();
       }
     });
   }
 
-  showModal(): void {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-      modal.style.display = 'block';
+  // Método para reproducir el sonido
+  playClickSound(): void {
+    const audio = document.getElementById('clickSound') as HTMLAudioElement;
+    if (audio) {
+      audio.play();
     }
   }
 
+  showModal(): void {
+    this.isModalVisible = true; // Mostrar el modal
+    this.isModalClosing = false; // Asegurarse de que no esté cerrando
+    this.playClickSound(); // Reproducir sonido al abrir el modal
+  }
+
   closeModal(): void {
-    const modal = document.getElementById('successModal');
-    if (modal) {
-      modal.style.display = 'none';
-    }
+    this.isModalClosing = true; // Activar animación de salida
+    setTimeout(() => {
+      this.isModalVisible = false; // Ocultar el modal después de la animación
+      this.isModalClosing = false; // Reiniciar el estado de cierre
+    }, 300); // Duración de la animación de salida (0.3s)
+    this.playClickSound(); // Reproducir sonido al cerrar el modal
   }
 
 }

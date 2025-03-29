@@ -1,10 +1,11 @@
 package analyzer
 
 import (
-	commands "terminal/commands"
 	"errors"
 	"fmt"
 	"strings"
+	commands "terminal/commands"
+	"terminal/stores"
 )
 
 // Analyzer analiza el comando de entrada y ejecuta la acción correspondiente
@@ -41,6 +42,8 @@ func Analyzer(input string) (string, error) {
 		return commands.ParseRep(tokens[1:])
 	case "login":
 		return commands.ParseLogin(tokens[1:])
+	case "mounted":
+		return stores.PrintMountedPartitions()
 	default:
 		// Si el comando no es reconocido, devuelve un error
 		return "", fmt.Errorf("comando desconocido: %s", tokens[0])
