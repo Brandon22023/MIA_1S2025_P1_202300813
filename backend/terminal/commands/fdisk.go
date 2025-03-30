@@ -162,56 +162,7 @@ func ParseFdisk(tokens []string) (string, error) {
 		cmd.path, cmd.name, cmd.size, cmd.unit, cmd.typ, cmd.fit), nil
 }
 
-func validateDisk(fdisk *FDISK) error {
-    // Crear una instancia de MBR
-    var mbr structures.MBR
 
-    // Verificar si el archivo del disco existe
-    if _, err := os.Stat(fdisk.path); os.IsNotExist(err) {
-        return fmt.Errorf("path no encontrado: %s", fdisk.path)
-    }
-
-    // Deserializar el MBR desde el archivo
-    err := mbr.DeserializeMBR(fdisk.path)
-    if err != nil {
-        return fmt.Errorf("error deserializando el MBR: %v", err)
-    }
-
-    // Validar si ya están ocupadas las 4 particiones
-    if isMBRFull(&mbr) {
-        return errors.New("no se pueden agregar más particiones: las 4 particiones del MBR ya están ocupadas")
-    }
-
-    // Convertir el tamaño solicitado a bytes
-    sizeBytes, err := utils.ConvertToBytes(fdisk.size, fdisk.unit)
-    if err != nil {
-        return fmt.Errorf("error convirtiendo el tamaño: %v", err)
-    }
-	fmt.Printf("Tamaño convertido a bytes: %d\n", sizeBytes)
-
-    // Calcular el espacio disponible en el disco
-    availableSpace := calculateAvailableSpace(&mbr)
-	if int32(sizeBytes) > availableSpace { // Convertir sizeBytes a int32
-        return fmt.Errorf("no hay suficiente espacio disponible en el disco. Espacio disponible: %d bytes", availableSpace)
-    }
-
-
-    return nil
-}
-func calculateAvailableSpace(mbr *structures.MBR) int32 {
-    totalSize := mbr.Mbr_size // Tamaño total del disco
-    usedSpace := int32(0)
-
-    // Sumar el tamaño de todas las particiones activas
-    for _, partition := range mbr.Mbr_partitions {
-        if partition.Part_status[0] == 1 { // Si la partición está activa
-            usedSpace += partition.Part_size
-        }
-    }
-
-    // Calcular el espacio disponible
-    return totalSize - usedSpace
-}
 func commandFdisk(fdisk *FDISK) error {
 	// Convertir el tamaño a bytes
 	fmt.Printf("Unidad antes de la conversión: %s\n", fdisk.unit)
