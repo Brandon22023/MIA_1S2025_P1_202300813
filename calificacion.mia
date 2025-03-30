@@ -4,7 +4,6 @@ mkdisk -size=50 -unit=M -fit=FF -path=/home/brandon/Calificacion_MIA/Discos/Disc
 
 mkdisk -unit=K -size=51200 -fit=BF -path=/home/brandon/Calificacion_MIA/Discos/Disco2.mia
 
-
 mkdisk -size=13 -path=/home/brandon/Calificacion_MIA/Discos/Disco3.mia
 
 mkdisk -size=51200 -unit=K -path=/home/brandon/Calificacion_MIA/Discos/Disco4.mia

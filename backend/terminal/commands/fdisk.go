@@ -16,7 +16,7 @@ import (
 // FDISK estructura que representa el comando fdisk con sus parámetros
 type FDISK struct {
 	size int    // Tamaño de la partición
-	unit string // Unidad de medida del tamaño (K o M)
+	unit string // Unidad de medida del tamaño (K o M o B)
 	fit  string // Tipo de ajuste (BF, FF, WF)
 	path string // Ruta del archivo del disco
 	typ  string // Tipo de partición (P, E, L)
@@ -36,7 +36,7 @@ func ParseFdisk(tokens []string) (string, error) {
 	// Unir tokens en una sola cadena y luego dividir por espacios, respetando las comillas
 	args := strings.Join(tokens, " ")
 	// Expresión regular para encontrar los parámetros del comando fdisk
-	re := regexp.MustCompile(`-size=\d+|-unit=[kKmM]|-fit=[bBfF]{2}|-path="[^"]+"|-path=[^\s]+|-type=[pPeElL]|-name="[^"]+"|-name=[^\s]+`)
+	re := regexp.MustCompile(`-size=\d+|-unit=[kKmMbB]|-fit=[bBfF]{2}|-path="[^"]+"|-path=[^\s]+|-type=[pPeElL]|-name="[^"]+"|-name=[^\s]+`)
 	// Encuentra todas las coincidencias de la expresión regular en la cadena de argumentos
 	matches := re.FindAllString(args, -1)
 
@@ -68,7 +68,9 @@ func ParseFdisk(tokens []string) (string, error) {
 			if value != "K" && value != "M" && value != "B" {
 				return "", errors.New("la unidad debe ser K, M o B")
 			}
+
 			cmd.unit = strings.ToUpper(value)
+			fmt.Printf("Unidad procesada: %s\n", cmd.unit) // Verificar la unidad
 		case "-fit":
 			// Verifica que el ajuste sea "BF", "FF" o "WF"
 			value = strings.ToUpper(value)
@@ -132,10 +134,16 @@ func ParseFdisk(tokens []string) (string, error) {
 	}
 	
 
-	// Validar espacio disponible y particiones antes de crear
-    err := validateDisk(cmd)
+	// Deserializar el MBR para verificar las particiones
+    var mbr structures.MBR
+    err := mbr.DeserializeMBR(cmd.path)
     if err != nil {
-        return "", err // Retorna el error al frontend
+        return "", fmt.Errorf("error deserializando el MBR: %v", err)
+    }
+
+    // Validar si ya se alcanzó el límite de particiones
+    if !mbr.HasAvailablePartition() {
+        return "", errors.New("no se pueden agregar más particiones: las 4 particiones del MBR ya están ocupadas")
     }
 
 	// Crear la partición con los parámetros proporcionados
@@ -148,7 +156,7 @@ func ParseFdisk(tokens []string) (string, error) {
 	return fmt.Sprintf("FDISK: Partición creada exitosamente\n"+
 		"-> Path: %s\n"+
 		"-> Nombre: %s\n"+
-		"-> Tamaño: %d%s\n"+
+		"-> Tamaño: %d %s\n"+
 		"-> Tipo: %s\n"+
 		"-> Fit: %s",
 		cmd.path, cmd.name, cmd.size, cmd.unit, cmd.typ, cmd.fit), nil
@@ -179,6 +187,7 @@ func validateDisk(fdisk *FDISK) error {
     if err != nil {
         return fmt.Errorf("error convirtiendo el tamaño: %v", err)
     }
+	fmt.Printf("Tamaño convertido a bytes: %d\n", sizeBytes)
 
     // Calcular el espacio disponible en el disco
     availableSpace := calculateAvailableSpace(&mbr)
@@ -205,12 +214,13 @@ func calculateAvailableSpace(mbr *structures.MBR) int32 {
 }
 func commandFdisk(fdisk *FDISK) error {
 	// Convertir el tamaño a bytes
-	
+	fmt.Printf("Unidad antes de la conversión: %s\n", fdisk.unit)
 	sizeBytes, err := utils.ConvertToBytes(fdisk.size, fdisk.unit)
 	if err != nil {
 		fmt.Println("Error converting size:", err)
 		return err
 	}
+	fmt.Printf("Tamaño convertido a bytes: %d\n", sizeBytes)
 
 	if fdisk.typ == "P" {
 		// Crear partición primaria
