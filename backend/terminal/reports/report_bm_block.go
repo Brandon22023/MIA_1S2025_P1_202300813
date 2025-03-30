@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// ReportBMInode genera un reporte del bitmap de inodos y lo guarda en la ruta especificada
-func ReportBMInode(superblock *structures.SuperBlock, diskPath string, path string) error {
+// ReportBMInode genera un reporte del bitmap de blockes y lo guarda en la ruta especificada
+func ReportBMIblock(superblock *structures.SuperBlock, diskPath string, path string) error {
 	// Crear las carpetas padre si no existen
 	err := utils.CreateParentDirs(path)
 	if err != nil {
@@ -23,15 +23,15 @@ func ReportBMInode(superblock *structures.SuperBlock, diskPath string, path stri
 	}
 	defer file.Close()
 
-	// Calcular el número total de inodos
-	totalInodes := superblock.S_inodes_count + superblock.S_free_inodes_count
+	// Calcular el número total de block
+	totalBlocks := superblock.S_blocks_count + superblock.S_free_blocks_count
 
-	// Obtener el contenido del bitmap de inodos
+	// Obtener el contenido del bitmap de block
 	var bitmapContent strings.Builder
 
-	for i := int32(0); i < totalInodes; i++ {
+	for i := int32(0); i < totalBlocks; i++ {
 		// Establecer el puntero
-		_, err := file.Seek(int64(superblock.S_bm_inode_start+i), 0)
+		_, err := file.Seek(int64(superblock.S_bm_block_start+i), 0)
 		if err != nil {
 			return fmt.Errorf("error al establecer el puntero en el archivo: %v", err)
 		}
@@ -44,16 +44,15 @@ func ReportBMInode(superblock *structures.SuperBlock, diskPath string, path stri
 		}
 
 		// Verificar si el carácter leído es una 'X' y reemplazarlo por '1'
-		if char[0] == 'X' {
-			fmt.Printf("Advertencia: carácter 'X' encontrado en la posición %d. Reemplazando por '1'.\n", superblock.S_bm_inode_start+i)
-			char[0] = '1'
-		}
-
+        if char[0] == 'X' {
+            fmt.Printf("Advertencia: carácter 'X' encontrado en la posición %d. Reemplazando por '1'.\n", superblock.S_bm_inode_start+i)
+            char[0] = '1'
+        }
 
 		// Agregar el carácter al contenido del bitmap
 		bitmapContent.WriteByte(char[0])
 
-		// Agregar un carácter de nueva línea cada 20 caracteres (20 inodos)
+		// Agregar un carácter de nueva línea cada 20 caracteres (20 blocks)
 		if (i+1)%20 == 0 {
 			bitmapContent.WriteString("\n")
 		}
@@ -72,6 +71,6 @@ func ReportBMInode(superblock *structures.SuperBlock, diskPath string, path stri
 		return fmt.Errorf("error al escribir en el archivo TXT: %v", err)
 	}
 
-	fmt.Println("Archivo del bitmap de inodos generado:", path)
+	fmt.Println("Archivo del bitmap de blockes generado:", path)
 	return nil
 }

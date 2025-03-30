@@ -12,10 +12,12 @@ login -user=root -pass=123 -id=131A
 mkdir -path="/home"
 mkdir -path="/home/usac"
 mkdir -path="/home/work"
+mkdir -path="/home/usac/mia"
 
 
 rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_mbr.png" -name=mbr
 rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_inode.png" -name=inode
 rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_bm_inode.txt" -name=bm_inode
+rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_bm_block.txt" -name=bm_block
 
 rmdisk -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"
