@@ -3,12 +3,12 @@ package structures
 import (
 	"encoding/binary"
 	"os"
-
 )
 
 // CreateBitMaps crea los Bitmaps de inodos y bloques en el archivo especificado
 func (sb *SuperBlock) CreateBitMaps(path string) error {
 	// Escribir Bitmaps
+	
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return err
