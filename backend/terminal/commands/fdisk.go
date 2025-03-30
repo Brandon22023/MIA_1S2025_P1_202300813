@@ -146,6 +146,12 @@ func ParseFdisk(tokens []string) (string, error) {
         return "", errors.New("no se pueden agregar más particiones: las 4 particiones del MBR ya están ocupadas")
     }
 
+	// Validar que el tamaño de la partición no exceda el tamaño del disco
+	err = validatePartitionSize(cmd, &mbr)
+	if err != nil {
+		return "", err
+	}
+
 	// Crear la partición con los parámetros proporcionados
 	err = commandFdisk(cmd)
 	if err != nil {
@@ -162,7 +168,29 @@ func ParseFdisk(tokens []string) (string, error) {
 		cmd.path, cmd.name, cmd.size, cmd.unit, cmd.typ, cmd.fit), nil
 }
 
+func validatePartitionSize(fdisk *FDISK, mbr *structures.MBR) error {
+    // Convertir el tamaño solicitado a bytes
+    sizeBytes, err := utils.ConvertToBytes(fdisk.size, fdisk.unit)
+    if err != nil {
+        return fmt.Errorf("error convirtiendo el tamaño: %v", err)
+    }
 
+    // Calcular el espacio ya utilizado por las particiones existentes
+    usedSpace := int32(0)
+    for _, partition := range mbr.Mbr_partitions {
+        if partition.Part_status[0] != 'N' { // Si la partición está activa o creada
+            usedSpace += partition.Part_size
+        }
+    }
+
+    // Verificar si el tamaño solicitado más el espacio utilizado excede el tamaño total del disco
+    if usedSpace+int32(sizeBytes) > mbr.Mbr_size {
+        return fmt.Errorf("el tamaño solicitado (%d bytes) excede el espacio disponible en el disco. Espacio disponible: %d bytes",
+            sizeBytes, mbr.Mbr_size-usedSpace)
+    }
+
+    return nil
+}
 func commandFdisk(fdisk *FDISK) error {
 	// Convertir el tamaño a bytes
 	fmt.Printf("Unidad antes de la conversión: %s\n", fdisk.unit)
