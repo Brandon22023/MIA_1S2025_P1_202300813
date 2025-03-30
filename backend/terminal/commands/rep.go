@@ -143,6 +143,12 @@ func commandRep(rep *REP) error {
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
+	case "sb":
+		err = reports.ReportSuperBlock(mountedSb, rep.path)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		
 
 	}
 
