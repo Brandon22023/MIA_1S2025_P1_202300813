@@ -38,6 +38,45 @@ func ParseMkdisk(tokens []string) (string, error) {
 	re := regexp.MustCompile(`-size=\d+|-unit=[kKmM]|-fit=[bBfFwW]{2}|-path="[^"]+"|-path=[^\s]+`)
 	// Encuentra todas las coincidencias de la expresión regular en la cadena de argumentos
 	matches := re.FindAllString(args, -1)
+	
+
+	// Lista de parámetros válidos
+	validParams := map[string]bool{
+		"-size": true,
+		"-unit": true,
+		"-fit":  true,
+		"-path": true,
+	}
+	// Verificar si hay parámetros no reconocidos
+    usedParams := make(map[string]bool) // Para rastrear los parámetros encontrados
+    for _, match := range matches {
+        // Divide cada parte en clave y valor usando "=" como delimitador
+        kv := strings.SplitN(match, "=", 2)
+        if len(kv) != 2 {
+            return "", fmt.Errorf("error de parámetros: formato de parámetro inválido: %s", match)
+        }
+        key := strings.ToLower(kv[0])
+
+        // Verificar si el parámetro es válido
+        if _, exists := validParams[key]; !exists {
+            return "", fmt.Errorf("error de parámetros: parámetro no reconocido: %s", key)
+        }
+
+        // Registrar el parámetro como usado
+        usedParams[key] = true
+    }
+
+    // Verificar si hay parámetros adicionales no reconocidos en los tokens originales
+    for _, token := range tokens {
+        if !strings.HasPrefix(token, "-") {
+            continue // Ignorar valores que no son parámetros
+        }
+        tk := strings.SplitN(token, "=", 2)[0]
+        tk = strings.ToLower(tk)
+        if _, exists := validParams[tk]; !exists {
+            return "", fmt.Errorf("error de parámetros: parámetro no reconocido: %s", tk)
+        }
+    }
 
 	// Itera sobre cada coincidencia encontrada
 	for _, match := range matches {
@@ -51,6 +90,10 @@ func ParseMkdisk(tokens []string) (string, error) {
 		// Remove quotes from value if present
 		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
 			value = strings.Trim(value, "\"")
+		}
+		// Verifica si el parámetro es válido
+		if _, exists := validParams[key]; !exists {
+			return "", fmt.Errorf("parámetro desconocido: %s", key)
 		}
 
 		// Switch para manejar diferentes parámetros

@@ -75,9 +75,15 @@ func ParseRep(tokens []string) (string, error) {
 	if cmd.id == "" || cmd.path == "" || cmd.name == "" {
 		return "", errors.New("faltan parámetros requeridos: -id, -path, -name")
 	}
+	// Verificar si la partición está montada
+	_, _, _, err := stores.GetMountedPartitionRep(cmd.id)
+	if err != nil {
+		// Si el ID no está montado, retornar un mensaje de error
+		return "", fmt.Errorf("el ID '%s' no está montado. No se puede generar el reporte", cmd.id)
+	}
 
 	// Aquí se puede agregar la lógica para ejecutar el comando rep con los parámetros proporcionados
-	err := commandRep(cmd)
+	err = commandRep(cmd)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -112,8 +118,9 @@ func commandRep(rep *REP) error {
 	// Obtener la partición montada
 	mountedMbr, mountedSb, mountedDiskPath, err := stores.GetMountedPartitionRep(rep.id)
 	if err != nil {
-		return err
-	}
+        // Retornar un error claro con detalles
+        return fmt.Errorf("error: la partición no esta montada")
+    }
 
 	// Switch para manejar diferentes tipos de reportes
 	switch rep.name {

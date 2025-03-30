@@ -14,6 +14,8 @@ func ConvertToBytes(size int, unit string) (int, error) {
 		return size * 1024, nil // Convierte kilobytes a bytes
 	case "M":
 		return size * 1024 * 1024, nil // Convierte megabytes a bytes
+	case "B":
+        return size, nil // Los bytes ya están en la unidad correcta
 	default:
 		return 0, errors.New("invalid unit") // Devuelve un error si la unidad es inválida
 	}
