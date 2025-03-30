@@ -76,6 +76,7 @@ func ParseMount(tokens []string) (string, error) {
 	if cmd.name == "" {
 		return "", errors.New("faltan parámetros requeridos: -name")
 	}
+
 	// Montamos la partición
 	idPartition, err := commandMount(cmd)
 	if err != nil {
@@ -94,29 +95,18 @@ func commandMount(mount *MOUNT) (string, error) {
 	// Crear una instancia de MBR
 	var mbr structures.MBR
 
-
 	// Deserializar la estructura MBR desde un archivo binario
 	err := mbr.DeserializeMBR(mount.path)
 	if err != nil {
 		fmt.Println("Error deserializando el MBR:", err)
 		return "", err
 	}
-	
 
 	// Buscar la partición con el nombre especificado
-	partition, indexPartition, err := mbr.GetPartitionByName(mount.name)
-	if err != nil {
-		fmt.Println("Error obteniendo la partición:", err)
-		return "", err
-	}
+	partition, indexPartition := mbr.GetPartitionByName(mount.name)
 	if partition == nil {
 		fmt.Println("Error: la partición no existe")
 		return "", errors.New("la partición no existe")
-	}
-
-	// Nueva validación: Si la partición ya está montada, lanzar error
-	if partition.Part_status[0] == '1' {
-		return "", fmt.Errorf("error: la partición '%s' ya está montada y no se puede montar nuevamente", mount.name)
 	}
 
 	/* SOLO PARA VERIFICACIÓN */

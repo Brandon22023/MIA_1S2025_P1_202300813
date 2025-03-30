@@ -85,35 +85,20 @@ func (mbr *MBR) GetFirstAvailablePartition() (*PARTITION, int, int) {
 	return nil, -1, -1
 }
 
-
-
-func (mbr *MBR) GetPartitionByName(name string) (*PARTITION, int, error) {
+// Método para obtener una partición por nombre
+func (mbr *MBR) GetPartitionByName(name string) (*PARTITION, int) {
 	// Recorrer las particiones del MBR
 	for i, partition := range mbr.Mbr_partitions {
+		// Convertir Part_name a string y eliminar los caracteres nulos
 		partitionName := strings.Trim(string(partition.Part_name[:]), "\x00 ")
+		// Convertir el nombre de la partición a string y eliminar los caracteres nulos
 		inputName := strings.Trim(name, "\x00 ")
-
-		// Si el nombre coincide
+		// Si el nombre de la partición coincide, devolver la partición y el índice
 		if strings.EqualFold(partitionName, inputName) {
-			// Verificar si ya está montada
-			if partition.Part_status[0] == '1' {
-				return nil, -1, errors.New("error: la partición ya está montada")
-			}
-			// Retornar la partición si no está montada
-			return &mbr.Mbr_partitions[i], i, nil
+			return &partition, i
 		}
 	}
-	return nil, -1, errors.New("error: partición no encontrada")
-}
-
-
-func (mbr *MBR) HasAvailablePartition() bool {
-	for _, partition := range mbr.Mbr_partitions {
-		if partition.Part_start == -1 {
-			return true // Hay al menos una partición disponible
-		}
-	}
-	return false // No hay espacio disponible
+	return nil, -1
 }
 
 // Función para obtener una partición por ID
@@ -130,7 +115,6 @@ func (mbr *MBR) GetPartitionByID(id string) (*PARTITION, error) {
 	}
 	return nil, errors.New("partición no encontrada")
 }
-
 
 // Método para imprimir los valores del MBR
 func (mbr *MBR) PrintMBR() {

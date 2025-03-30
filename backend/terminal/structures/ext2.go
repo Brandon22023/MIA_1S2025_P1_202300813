@@ -1,7 +1,7 @@
 package structures
 
 import (
-	utils "terminal/utils"
+	"terminal/utils"
 	"strings"
 	"time"
 )

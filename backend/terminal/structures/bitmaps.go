@@ -3,25 +3,12 @@ package structures
 import (
 	"encoding/binary"
 	"os"
-	"fmt"
+
 )
 
 // CreateBitMaps crea los Bitmaps de inodos y bloques en el archivo especificado
 func (sb *SuperBlock) CreateBitMaps(path string) error {
 	// Escribir Bitmaps
-	// Validar que los valores sean positivos
-    if sb.S_inodes_count <= 0 {
-		return fmt.Errorf("error: el valor de S_inodes_count es inválido (%d)", sb.S_inodes_count)
-	}
-	if sb.S_blocks_count <= 0 {
-		return fmt.Errorf("error: el valor de S_blocks_count es inválido (%d)", sb.S_blocks_count)
-	}
-	if sb.S_free_inodes_count <= 0 {
-		return fmt.Errorf("error: el valor de S_free_inodes_count es inválido (%d)", sb.S_free_inodes_count)
-	}
-	if sb.S_free_blocks_count <= 0 {
-		return fmt.Errorf("error: el valor de S_free_blocks_count es inválido (%d)", sb.S_free_blocks_count)
-	}
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return err

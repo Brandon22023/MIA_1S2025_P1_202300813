@@ -23,8 +23,13 @@ Esto queda a su criterio.
 */
 
 // Crear una partición con los parámetros proporcionados
-func (p *PARTITION) CreatePartition(partStart, partSize int, partType, partFit, partName string) {
-	// Asignar status de la partición
+func (p *PARTITION) CreatePartition(partStart, partSize int, partType, partFit, partName string) error {
+	
+	if partSize <= 0 {
+        return fmt.Errorf("error: el tamaño de la partición debe ser mayor a 0")
+    }// Asignar status de la partición
+
+	
 	p.Part_status[0] = '0' // El valor '0' indica que la partición ha sido creada
 
 	// Asignar el byte de inicio de la partición
@@ -45,6 +50,8 @@ func (p *PARTITION) CreatePartition(partStart, partSize int, partType, partFit, 
 
 	// Asignar el nombre de la partición
 	copy(p.Part_name[:], partName)
+
+	return nil
 }
 
 // Montar una partición por el id

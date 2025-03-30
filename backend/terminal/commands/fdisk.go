@@ -10,7 +10,6 @@ import (
 	"strings" // Paquete para manipular cadenas, como unir, dividir, y modificar contenido de cadenas
 	"encoding/binary" // Agregar esta línea
 	"os" // Agregar esta línea
-
 )
 
 // FDISK estructura que representa el comando fdisk con sus parámetros
@@ -64,9 +63,9 @@ func ParseFdisk(tokens []string) (string, error) {
 			}
 			cmd.size = size
 		case "-unit":
-			// Verifica que la unidad sea "K", "M" o "B"
-			if value != "K" && value != "M" && value != "B" {
-				return "", errors.New("la unidad debe ser K, M o B")
+			// Verifica que la unidad sea "K" o "M"
+			if value != "K" && value != "M" {
+				return "", errors.New("la unidad debe ser K o M")
 			}
 			cmd.unit = strings.ToUpper(value)
 		case "-fit":
@@ -81,10 +80,6 @@ func ParseFdisk(tokens []string) (string, error) {
 			if value == "" {
 				return "", errors.New("el path no puede estar vacío")
 			}
-			// Validar si el archivo existe
-            if _, err := os.Stat(value); os.IsNotExist(err) {
-                return "", fmt.Errorf("path no encontrado: %s", value)
-            }
 			cmd.path = value
 		case "-type":
 			// Verifica que el tipo sea "P", "E" o "L"
@@ -130,16 +125,9 @@ func ParseFdisk(tokens []string) (string, error) {
 	if cmd.typ == "" {
 		cmd.typ = "P"
 	}
-	
-
-	// Validar espacio disponible y particiones antes de crear
-    err := validateDisk(cmd)
-    if err != nil {
-        return "", err // Retorna el error al frontend
-    }
 
 	// Crear la partición con los parámetros proporcionados
-	err = commandFdisk(cmd)
+	err := commandFdisk(cmd)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -154,62 +142,8 @@ func ParseFdisk(tokens []string) (string, error) {
 		cmd.path, cmd.name, cmd.size, cmd.unit, cmd.typ, cmd.fit), nil
 }
 
-func validateDisk(fdisk *FDISK) error {
-    // Crear una instancia de MBR
-    var mbr structures.MBR
-
-    // Verificar si el archivo del disco existe
-    if _, err := os.Stat(fdisk.path); os.IsNotExist(err) {
-        return fmt.Errorf("path no encontrado: %s", fdisk.path)
-    }
-
-    // Deserializar el MBR desde el archivo
-    err := mbr.DeserializeMBR(fdisk.path)
-    if err != nil {
-        return fmt.Errorf("error deserializando el MBR: %v", err)
-    }
-
-    // Validar si ya están ocupadas las 4 particiones
-    if isMBRFull(&mbr) {
-        return errors.New("no se pueden agregar más particiones: las 4 particiones del MBR ya están ocupadas")
-    }
-
-    // Convertir el tamaño solicitado a bytes
-    sizeBytes, err := utils.ConvertToBytes(fdisk.size, fdisk.unit)
-    if err != nil {
-        return fmt.Errorf("error convirtiendo el tamaño: %v", err)
-    }
-
-    // Calcular el espacio disponible en el disco
-    availableSpace := calculateAvailableSpace(&mbr)
-	if int32(sizeBytes) > availableSpace { // Convertir sizeBytes a int32
-        return fmt.Errorf("no hay suficiente espacio disponible en el disco. Espacio disponible: %d bytes", availableSpace)
-    }
-
-	if !mbr.HasAvailablePartition() {
-		fmt.Println("Error: No se pueden agregar más particiones, el MBR está lleno.")
-		return fmt.Errorf("no se pueden agregar más particiones, el MBR está lleno")
-	}
-
-    return nil
-}
-func calculateAvailableSpace(mbr *structures.MBR) int32 {
-    totalSize := mbr.Mbr_size // Tamaño total del disco
-    usedSpace := int32(0)
-
-    // Sumar el tamaño de todas las particiones activas
-    for _, partition := range mbr.Mbr_partitions {
-        if partition.Part_status[0] == 1 { // Si la partición está activa
-            usedSpace += partition.Part_size
-        }
-    }
-
-    // Calcular el espacio disponible
-    return totalSize - usedSpace
-}
 func commandFdisk(fdisk *FDISK) error {
 	// Convertir el tamaño a bytes
-	
 	sizeBytes, err := utils.ConvertToBytes(fdisk.size, fdisk.unit)
 	if err != nil {
 		fmt.Println("Error converting size:", err)
@@ -244,15 +178,6 @@ func commandFdisk(fdisk *FDISK) error {
 
 	return nil
 }
-func isMBRFull(mbr *structures.MBR) bool {
-    for _, partition := range mbr.Mbr_partitions {
-        if partition.Part_status[0] != 1 { // Si hay al menos una partición inactiva
-            return false
-        }
-    }
-    return true // Todas las particiones están activas
-}
-
 
 func createPrimaryPartition(fdisk *FDISK, sizeBytes int) error {
 	// Crear una instancia de MBR
@@ -265,12 +190,10 @@ func createPrimaryPartition(fdisk *FDISK, sizeBytes int) error {
 		return err
 	}
 
-
 	/* SOLO PARA VERIFICACIÓN */
 	// Imprimir MBR
 	fmt.Println("\nMBR original:")
 	mbr.PrintMBR()
-	
 
 	// Obtener la primera partición disponible
 	availablePartition, startPartition, indexPartition := mbr.GetFirstAvailablePartition()
