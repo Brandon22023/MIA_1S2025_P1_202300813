@@ -4,8 +4,13 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"os"
+	"os/exec"
 	"time"
+	"strings"
+	//strconv"
+	"path/filepath"
+	"html" 
+	"os"
 )
 
 type SuperBlock struct {
@@ -185,6 +190,105 @@ func (sb *SuperBlock) PrintBlocks(path string) error {
 
 	return nil
 }
+
+func (sb *SuperBlock) GenerateBlocksDot(path string, outputPath string) error {
+    dotContent := `digraph G {
+        node [shape=plaintext, fontname="Times"]
+        edge [color="#4682B4", arrowhead=vee]
+        rankdir=LR;
+    `
+
+    var connections []string
+    var lastBlockIndex int32 = -1
+
+    // Iterar sobre cada inodo
+    for i := int32(0); i < sb.S_inodes_count; i++ {
+        inode := &Inode{}
+        err := inode.Deserialize(path, int64(sb.S_inode_start+(i*sb.S_inode_size)))
+        if err != nil {
+            return err
+        }
+
+        for _, blockIndex := range inode.I_block {
+            if blockIndex == -1 {
+                break
+            }
+
+            var blockContent string
+            if inode.I_type[0] == '0' { // Bloque de carpeta
+                block := &FolderBlock{}
+                err := block.Deserialize(path, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+                if err != nil {
+                    return err
+                }
+
+                blockContent = "<table border='0' cellborder='1' cellspacing='0' cellpadding='4'>"
+                blockContent += fmt.Sprintf("<tr><td bgcolor='#5F9EA0' style='color:white;' colspan='2'><b>Bloque Carpeta %d</b></td></tr>", blockIndex)
+                blockContent += "<tr><td><b>name</b></td><td><b>inodo</b></td></tr>"
+                for _, content := range block.B_content {
+                    name := strings.TrimRight(string(content.B_name[:]), "\x00")
+                    blockContent += fmt.Sprintf("<tr><td>%s</td><td>%d</td></tr>", name, content.B_inodo)
+                }
+                blockContent += "</table>"
+            } else if inode.I_type[0] == '1' { // Bloque de archivo
+                block := &FileBlock{}
+                err := block.Deserialize(path, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+                if err != nil {
+                    return err
+                }
+                content := strings.TrimRight(string(block.B_content[:]), "\x00")
+                blockContent = "<table border='0' cellborder='1' cellspacing='0' cellpadding='4'>"
+                blockContent += fmt.Sprintf("<tr><td bgcolor='#5F9EA0' style='color:white;'><b>Bloque Archivo %d</b></td></tr>", blockIndex)
+                blockContent += fmt.Sprintf("<tr><td>%s</td></tr>", html.EscapeString(content))
+                blockContent += "</table>"
+            }
+
+            dotContent += fmt.Sprintf("block%d [label=<%s>];", blockIndex, blockContent)
+            
+            // Conectar bloques secuencialmente
+            if lastBlockIndex != -1 {
+                connections = append(connections, fmt.Sprintf("block%d -> block%d;", lastBlockIndex, blockIndex))
+            }
+            lastBlockIndex = blockIndex
+        }
+    }
+
+    dotContent += strings.Join(connections, "\n")
+    dotContent += "}"
+
+    // Extraer la ruta del directorio y el nombre base del archivo
+    dir := filepath.Dir(outputPath)                                      // Carpeta donde se guardará
+    fileBase := strings.TrimSuffix(filepath.Base(outputPath), ".png")    // Nombre sin extensión `.png`
+    dotFilePath := filepath.Join(dir, fileBase+".dot")                   // Ruta para el archivo `.dot`
+    pngFilePath := filepath.Join(dir, fileBase+".png")                   // Ruta final del `.png`
+
+    // Crear el archivo `.dot`
+    dotFile, err := os.Create(dotFilePath)
+    if err != nil {
+        return err
+    }
+    defer dotFile.Close()
+
+    _, err = dotFile.WriteString(dotContent)
+    if err != nil {
+        return err
+    }
+
+    // Ejecutar Graphviz para convertir el `.dot` en `.png`
+    cmd := exec.Command("dot", "-Tpng", dotFilePath, "-o", pngFilePath)
+    err = cmd.Run()
+    if err != nil {
+        return err
+    }
+
+    fmt.Println("Diagrama de bloques generado:", pngFilePath)
+    return nil
+}
+
+
+
+
+
 // Get users.txt block
 func (sb *SuperBlock) GetUsersBlock(path string) (*FileBlock, error) {
 	// Ir al inodo 1

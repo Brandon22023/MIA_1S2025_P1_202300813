@@ -19,5 +19,5 @@ rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/repo
 rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_inode.png" -name=inode
 rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_bm_inode.txt" -name=bm_inode
 rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_bm_block.txt" -name=bm_block
-
+rep -id=131A -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/output/report_block.dot" -name=block
 rmdisk -path="/home/brandon/Escritorio/MIA_1S2025_P1_202300813/disks/DiscoLab.mia"

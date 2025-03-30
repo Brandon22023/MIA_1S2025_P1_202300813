@@ -137,6 +137,13 @@ func commandRep(rep *REP) error {
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
+	case "block":
+		// Llamar al método para generar el reporte de bloques
+		err = mountedSb.GenerateBlocksDot(mountedDiskPath, rep.path)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+
 	}
 
 	return nil
