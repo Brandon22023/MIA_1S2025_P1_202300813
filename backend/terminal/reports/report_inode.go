@@ -22,7 +22,8 @@ func ReportInode(superblock *structures.SuperBlock, diskPath string, path string
 
 	// Iniciar el contenido DOT
 	dotContent := `digraph G {
-        node [shape=plaintext]
+        node [shape=plaintext, fontname="Times"]
+        edge [color="#4682B4", arrowhead=vee]
     `
 
 	// Iterar sobre cada inodo
@@ -41,18 +42,31 @@ func ReportInode(superblock *structures.SuperBlock, diskPath string, path string
 
 		// Definir el contenido DOT para el inodo actual
 		dotContent += fmt.Sprintf(`inode%d [label=<
-            <table border="0" cellborder="1" cellspacing="0">
-                <tr><td colspan="2"> REPORTE INODO %d </td></tr>
-                <tr><td>i_uid</td><td>%d</td></tr>
-                <tr><td>i_gid</td><td>%d</td></tr>
-                <tr><td>i_size</td><td>%d</td></tr>
-                <tr><td>i_atime</td><td>%s</td></tr>
-                <tr><td>i_ctime</td><td>%s</td></tr>
-                <tr><td>i_mtime</td><td>%s</td></tr>
-                <tr><td>i_type</td><td>%c</td></tr>
-                <tr><td>i_perm</td><td>%s</td></tr>
-                <tr><td colspan="2">BLOQUES DIRECTOS</td></tr>
-            `, i, i, inode.I_uid, inode.I_gid, inode.I_size, atime, ctime, mtime, rune(inode.I_type[0]), string(inode.I_perm[:]))
+            <table border="0" cellborder="1" cellspacing="0" cellpadding="4" style="font-family:Times">
+                <!-- Encabezado -->
+                <tr>
+                    <td colspan="2" bgcolor="#4682B4" style="color:white; font-size:14px; padding:6px;">
+                        <b>REPORTE INODO %d</b>
+                    </td>
+                </tr>
+                
+                <!-- Datos básicos -->
+                <tr bgcolor="#E6F2FF"><td><b>i_uid</b></td><td>%d</td></tr>
+                <tr><td><b>i_gid</b></td><td>%d</td></tr>
+                <tr bgcolor="#E6F2FF"><td><b>i_size</b></td><td>%d</td></tr>
+                <tr><td><b>i_atime</b></td><td>%s</td></tr>
+                <tr bgcolor="#E6F2FF"><td><b>i_ctime</b></td><td>%s</td></tr>
+                <tr><td><b>i_mtime</b></td><td>%s</td></tr>
+                <tr bgcolor="#E6F2FF"><td><b>i_type</b></td><td>%c</td></tr>
+                <tr><td><b>i_perm</b></td><td>%s</td></tr>
+                
+                <!-- Bloques directos -->
+                <tr>
+                    <td colspan="2" bgcolor="#5F9EA0" style="color:white; padding:4px;">
+                        <b>BLOQUES DIRECTOS</b>
+                    </td>
+                </tr>
+        `, i, i, inode.I_uid, inode.I_gid, inode.I_size, atime, ctime, mtime, rune(inode.I_type[0]), string(inode.I_perm[:]))
 
 		// Agregar los bloques directos a la tabla hasta el índice 11
 		for j, block := range inode.I_block {
@@ -64,14 +78,29 @@ func ReportInode(superblock *structures.SuperBlock, diskPath string, path string
 
 		// Agregar los bloques indirectos a la tabla
 		dotContent += fmt.Sprintf(`
-                <tr><td colspan="2">BLOQUE INDIRECTO</td></tr>
-                <tr><td>%d</td><td>%d</td></tr>
-                <tr><td colspan="2">BLOQUE INDIRECTO DOBLE</td></tr>
-                <tr><td>%d</td><td>%d</td></tr>
-                <tr><td colspan="2">BLOQUE INDIRECTO TRIPLE</td></tr>
-                <tr><td>%d</td><td>%d</td></tr>
+                <!-- Bloques indirectos -->
+                <tr>
+                    <td colspan="2" bgcolor="#5F9EA0" style="color:white; padding:4px;">
+                        <b>BLOQUE INDIRECTO</b>
+                    </td>
+                </tr>
+                <tr bgcolor="#F0F8FF"><td><b>13</b></td><td>%d</td></tr>
+                
+                <tr>
+                    <td colspan="2" bgcolor="#5F9EA0" style="color:white; padding:4px;">
+                        <b>BLOQUE INDIRECTO DOBLE</b>
+                    </td>
+                </tr>
+                <tr><td><b>14</b></td><td>%d</td></tr>
+                
+                <tr>
+                    <td colspan="2" bgcolor="#5F9EA0" style="color:white; padding:4px;">
+                        <b>BLOQUE INDIRECTO TRIPLE</b>
+                    </td>
+                </tr>
+                <tr bgcolor="#F0F8FF"><td><b>15</b></td><td>%d</td></tr>
             </table>>];
-        `, 13, inode.I_block[12], 14, inode.I_block[13], 15, inode.I_block[14])
+        `, inode.I_block[12], inode.I_block[13], inode.I_block[14])
 
 		// Agregar enlace al siguiente inodo si no es el último
 		if i < superblock.S_inodes_count-1 {
@@ -80,7 +109,10 @@ func ReportInode(superblock *structures.SuperBlock, diskPath string, path string
 	}
 
 	// Cerrar el contenido DOT
-	dotContent += "}"
+	dotContent += `
+        graph [fontname="Times"];
+        node [fontname="Times"];
+    }`
 
 	// Crear el archivo DOT
 	dotFile, err := os.Create(dotFileName)

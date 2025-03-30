@@ -23,14 +23,33 @@ func ReportMBR(mbr *structures.MBR, path string) error {
 
 	// Definir el contenido DOT con una tabla
 	dotContent := fmt.Sprintf(`digraph G {
-        node [shape=plaintext]
-        tabla [label=<
-            <table border="0" cellborder="1" cellspacing="0">
-                <tr><td colspan="2"> REPORTE MBR </td></tr>
-                <tr><td>mbr_tamano</td><td>%d</td></tr>
-                <tr><td>mrb_fecha_creacion</td><td>%s</td></tr>
-                <tr><td>mbr_disk_signature</td><td>%d</td></tr>
-            `, mbr.Mbr_size, time.Unix(int64(mbr.Mbr_creation_date), 0), mbr.Mbr_disk_signature)
+		node [shape=plaintext]
+		tabla [label=<
+			<table border="0" cellborder="1" cellspacing="0" cellpadding="4" style="rounded; font-family:Arial; font-size:12px;">
+				<!-- Encabezado principal -->
+				<tr>
+					<td colspan="2" bgcolor="#4A024A" style="color:white; font-size:16px; padding:8px; border-top-left-radius:8px; border-top-right-radius:8px;">
+						<b>REPORTE DE MBR</b>
+					</td>
+				</tr>
+				
+				<!-- Datos del MBR -->
+				<tr bgcolor="#EAD3EA">
+					<td><b>mbr_tamano</b></td>
+					<td>%d</td>
+				</tr>
+				<tr>
+					<td><b>mbr_fecha_creacion</b></td>
+					<td>%s</td>
+				</tr>
+				<tr bgcolor="#EAD3EA">
+					<td><b>mbr_disk_signature</b></td>
+					<td>%d</td>
+				</tr>
+				
+				<!-- Separador visual -->
+				<tr><td colspan="2" height="4" bgcolor="#4A024A"></td></tr>`, 
+		mbr.Mbr_size, time.Unix(int64(mbr.Mbr_creation_date), 0), mbr.Mbr_disk_signature)
 
 	// Agregar las particiones a la tabla
 	for i, part := range mbr.Mbr_partitions {
@@ -50,18 +69,50 @@ func ReportMBR(mbr *structures.MBR, path string) error {
 
 		// Agregar la partición a la tabla
 		dotContent += fmt.Sprintf(`
-				<tr><td colspan="2"> PARTICIÓN %d </td></tr>
-				<tr><td>part_status</td><td>%c</td></tr>
-				<tr><td>part_type</td><td>%c</td></tr>
-				<tr><td>part_fit</td><td>%c</td></tr>
-				<tr><td>part_start</td><td>%d</td></tr>
-				<tr><td>part_size</td><td>%d</td></tr>
-				<tr><td>part_name</td><td>%s</td></tr>
-			`, i+1, partStatus, partType, partFit, part.Part_start, part.Part_size, partName)
-	}
+            <!-- Partición %d -->
+            <tr>
+                <td colspan="2" bgcolor="#720072" style="color:white; font-size:14px; padding:6px;">
+                    <b>PARTICIÓN %d</b>
+                </td>
+            </tr>
+            <tr bgcolor="#F5D0F5">
+                <td><b>part_status</b></td>
+                <td>%c</td>
+            </tr>
+            <tr>
+                <td><b>part_type</b></td>
+                <td>%c</td>
+            </tr>
+            <tr bgcolor="#F5D0F5">
+                <td><b>part_fit</b></td>
+                <td>%c</td>
+            </tr>
+            <tr>
+                <td><b>part_start</b></td>
+                <td>%d</td>
+            </tr>
+            <tr bgcolor="#F5D0F5">
+                <td><b>part_size</b></td>
+                <td>%d</td>
+            </tr>
+            <tr>
+                <td><b>part_name</b></td>
+                <td>%s</td>
+            </tr>
+            
+            <!-- Separador visual entre particiones -->
+            <tr><td colspan="2" height="4" bgcolor="#4A024A"></td></tr>`,
+        i+1, i+1, partStatus, partType, partFit, part.Part_start, part.Part_size, partName)
+}
 
 	// Cerrar la tabla y el contenido DOT
-	dotContent += "</table>>] }"
+	dotContent += `
+	<!-- Pie de tabla -->
+	<tr>
+		<td colspan="2" bgcolor="#4A024A" style="border-bottom-left-radius:8px; border-bottom-right-radius:8px; height:4px;"></td>
+	</tr>
+	</table>>] }"
+`
 
 	// Guardar el contenido DOT en un archivo
 	file, err := os.Create(dotFileName)
