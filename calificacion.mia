@@ -90,5 +90,9 @@ mkfs -id=131A
 login -user=root -pass=123 -id=131A
 login -user=root -pass=123 -id=131A
 
+mkdir -path="/bin"
+mkdir -path="/home/archivos/archivos24"
+mkdir -p -path="/home/archivos/user/docs/usaci"
+mkdir -p -path="/home/archivos/carpeta1/carpeta2/carpeta3/carpeta4/carpeta5"
 logout
 logout

@@ -101,26 +101,47 @@ func commandMkdir(mkdir *MKDIR) error {
 	}
 
 	// Crear el directorio
-	err = createDirectory(mkdir.path, partitionSuperblock, partitionPath, mountedPartition)
+	err = createDirectory(mkdir.path, partitionSuperblock, partitionPath, mountedPartition, mkdir.p)
 	if err != nil {
-		err = fmt.Errorf("error al crear el directorio: %w", err)
+		return fmt.Errorf("error al crear el directorio: %w", err)
 	}
 
 	return err
 }
 
-func createDirectory(dirPath string, sb *structures.SuperBlock, partitionPath string, mountedPartition *structures.PARTITION) error {
+func createDirectory(dirPath string, sb *structures.SuperBlock, partitionPath string, mountedPartition *structures.PARTITION, allowParents bool) error {
 	fmt.Println("\nCreando directorio:", dirPath)
 
 	parentDirs, destDir := utils.GetParentDirectories(dirPath)
 	fmt.Println("\nDirectorios padres:", parentDirs)
 	fmt.Println("Directorio destino:", destDir)
 
+	// Validar si las carpetas padres existen
+    for _, parent := range parentDirs {
+        exists, err := sb.FolderExists(partitionPath, parent)
+        if err != nil {
+            return fmt.Errorf("error al verificar la existencia de la carpeta '%s': %w", parent, err)
+        }
+        if !exists {
+            if !allowParents {
+                return fmt.Errorf("error: no existen las carpetas padres para el directorio '%s'", dirPath)
+            }
+            // Crear las carpetas padres si la opción -p está habilitada
+            fmt.Printf("Creando carpeta padre: %s\n", parent)
+            err = sb.CreateFolder(partitionPath, parentDirs, parent)
+            if err != nil {
+                return fmt.Errorf("error al crear la carpeta padre '%s': %w", parent, err)
+            }
+        }
+    }
+
 	// Crear el directorio segun el path proporcionado
 	err := sb.CreateFolder(partitionPath, parentDirs, destDir)
 	if err != nil {
 		return fmt.Errorf("error al crear el directorio: %w", err)
 	}
+
+	
 
 	// Imprimir inodos y bloques
 	sb.PrintInodes(partitionPath)

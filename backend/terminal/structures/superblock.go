@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"html" 
 	"os"
+	utils "terminal/utils"
 )
 
 type SuperBlock struct {
@@ -93,6 +94,8 @@ func (sb *SuperBlock) Deserialize(path string, offset int64) error {
 
 	return nil
 }
+
+
 
 // PrintSuperBlock imprime los valores de la estructura SuperBlock
 func (sb *SuperBlock) Print() {
@@ -355,4 +358,100 @@ func (sb *SuperBlock) CreateFolder(path string, parentsDir []string, destDir str
 	}
 
 	return nil
+}
+
+func (sb *SuperBlock) FolderExists(partitionPath string, folderPath string) (bool, error) {
+    // Dividir el path en directorios padres y el directorio destino
+    parentDirs, destDir := utils.GetParentDirectories(folderPath)
+
+    // Buscar el inodo correspondiente al directorio destino
+    inode, err := sb.FindInode(partitionPath, parentDirs, destDir)
+    if err != nil {
+        return false, nil // Si no se encuentra, asumimos que no existe
+    }
+
+    // Verificar si el inodo encontrado es un directorio
+    if inode != nil && inode.I_type[0] == '0' { // '0' indica que es un directorio
+        return true, nil
+    }
+
+    return false, nil
+}
+func (sb *SuperBlock) FindInode(partitionPath string, parentDirs []string, destDir string) (*Inode, error) {
+    // Comenzar desde el inodo raíz
+    currentInode := &Inode{}
+    err := currentInode.Deserialize(partitionPath, int64(sb.S_inode_start))
+    if err != nil {
+        return nil, fmt.Errorf("error al deserializar el inodo raíz: %w", err)
+    }
+
+    // Recorrer los directorios padres
+    for _, dir := range parentDirs {
+        found := false
+        for _, blockIndex := range currentInode.I_block {
+            if blockIndex == -1 {
+                break
+            }
+
+            // Leer el bloque de carpeta
+            folderBlock := &FolderBlock{}
+            err := folderBlock.Deserialize(partitionPath, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+            if err != nil {
+                return nil, fmt.Errorf("error al deserializar el bloque de carpeta: %w", err)
+            }
+
+            // Buscar el directorio en el bloque
+            for _, content := range folderBlock.B_content {
+                name := strings.TrimRight(string(content.B_name[:]), "\x00")
+                if name == dir {
+                    // Cargar el inodo correspondiente
+                    currentInode = &Inode{}
+                    err := currentInode.Deserialize(partitionPath, int64(sb.S_inode_start+(content.B_inodo*sb.S_inode_size)))
+                    if err != nil {
+                        return nil, fmt.Errorf("error al deserializar el inodo: %w", err)
+                    }
+                    found = true
+                    break
+                }
+            }
+
+            if found {
+                break
+            }
+        }
+
+        if !found {
+            return nil, fmt.Errorf("directorio '%s' no encontrado", dir)
+        }
+    }
+
+    // Verificar si el directorio destino existe
+    for _, blockIndex := range currentInode.I_block {
+        if blockIndex == -1 {
+            break
+        }
+
+        // Leer el bloque de carpeta
+        folderBlock := &FolderBlock{}
+        err := folderBlock.Deserialize(partitionPath, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+        if err != nil {
+            return nil, fmt.Errorf("error al deserializar el bloque de carpeta: %w", err)
+        }
+
+        // Buscar el directorio destino en el bloque
+        for _, content := range folderBlock.B_content {
+            name := strings.TrimRight(string(content.B_name[:]), "\x00")
+            if name == destDir {
+                // Cargar el inodo correspondiente
+                destInode := &Inode{}
+                err := destInode.Deserialize(partitionPath, int64(sb.S_inode_start+(content.B_inodo*sb.S_inode_size)))
+                if err != nil {
+                    return nil, fmt.Errorf("error al deserializar el inodo: %w", err)
+                }
+                return destInode, nil
+            }
+        }
+    }
+
+    return nil, fmt.Errorf("directorio destino '%s' no encontrado", destDir)
 }
