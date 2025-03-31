@@ -96,3 +96,10 @@ mkdir -p -path="/home/archivos/user/docs/usaci"
 mkdir -p -path="/home/archivos/carpeta1/carpeta2/carpeta3/carpeta4/carpeta5"
 logout
 logout
+
+rep -id=131A -path=/home/brandon/Calificacion_MIA/Reportes/p4_r1_inode.jpg" -name=inode
+rep -id=131A -path=/home/brandon/Calificacion_MIA/Reportes/p4_r2_block.jpg" -name=block
+rep -id=131A -path=/home/brandon/Calificacion_MIA/Reportes/p4_r3_bm_inode.txt" -name=bm_inode
+rep -id=131A -path=/home/brandon/Calificacion_MIA/Reportes/p4_r4_bm_block.txt" -name=bm_block
+rep -id=131A -path=/home/brandon/Calificacion_MIA/Reportes/p4_r5_sb.jpg" -name=sb
+rep -id=131A -path="/home/brandon/Calificacion_MIA/Reportes/p4_r8_tree.png" -name=tree

@@ -455,3 +455,150 @@ func (sb *SuperBlock) FindInode(partitionPath string, parentDirs []string, destD
 
     return nil, fmt.Errorf("directorio destino '%s' no encontrado", destDir)
 }
+
+func (sb *SuperBlock) GenerateTreeDot(path string, outputPath string) error {
+    dotContent := `digraph EXT2_Tree {
+        node [shape=record, style=filled, fontname="Times"];
+    `
+
+    // Comenzar desde el inodo raíz
+    rootInode := &Inode{}
+    err := rootInode.Deserialize(path, int64(sb.S_inode_start))
+    if err != nil {
+        return fmt.Errorf("error al deserializar el inodo raíz: %w", err)
+    }
+
+    // Mapa para registrar los inodos visitados
+    visited := make(map[int32]bool)
+
+    // Generar el contenido del árbol recursivamente
+    var generateTree func(inode *Inode, inodeIndex int32) string
+    generateTree = func(inode *Inode, inodeIndex int32) string {
+        if visited[inodeIndex] {
+            return ""
+        }
+        visited[inodeIndex] = true
+
+        // Convertir tiempos a string
+        atime := time.Unix(int64(inode.I_atime), 0).Format("02/01/2006 15:04")
+        ctime := time.Unix(int64(inode.I_ctime), 0).Format("02/01/2006 15:04")
+        mtime := time.Unix(int64(inode.I_mtime), 0).Format("02/01/2006 15:04")
+
+        // Información del inodo
+        content := fmt.Sprintf(`"INODO %d" [label="{INODO %d | UID: %d | GID: %d | Size: %d | Atime: %s | Ctime: %s | Mtime: %s | Tipo: %c | Perm: %s`,
+            inodeIndex, inodeIndex, inode.I_uid, inode.I_gid, inode.I_size, atime, ctime, mtime, rune(inode.I_type[0]), string(inode.I_perm[:]))
+
+        // Agregar los valores de I_block en filas individuales
+        for i, blockIndex := range inode.I_block {
+            content += fmt.Sprintf(" | l_block %d: %d", i, blockIndex)
+        }
+        content += `}"];`
+
+        // Procesar bloques
+        for _, blockIndex := range inode.I_block {
+            if blockIndex == -1 {
+                break
+            }
+
+            if inode.I_type[0] == '0' { // Bloque de carpeta
+                folderBlock := &FolderBlock{}
+                err := folderBlock.Deserialize(path, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+                if err != nil {
+                    continue
+                }
+
+                blockContent := fmt.Sprintf(`"BLOQUE %d" [label="{BLOQUE %d`, blockIndex, blockIndex)
+                for _, contentEntry := range folderBlock.B_content {
+                    name := strings.TrimRight(string(contentEntry.B_name[:]), "\x00")
+                    if name != "" {
+                        blockContent += fmt.Sprintf(" | %s -> Inodo %d", name, contentEntry.B_inodo)
+                    }
+                }
+                blockContent += `}"];`
+                dotContent += blockContent
+
+                // Conectar inodo con bloque
+                dotContent += fmt.Sprintf(`"INODO %d" -> "BLOQUE %d";`, inodeIndex, blockIndex)
+            } else if inode.I_type[0] == '1' { // Bloque de archivo
+                fileBlock := &FileBlock{}
+                err := fileBlock.Deserialize(path, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+                if err != nil {
+                    continue
+                }
+
+                content := strings.TrimRight(string(fileBlock.B_content[:]), "\x00")
+                blockContent := fmt.Sprintf(`"BLOQUE %d" [label="{BLOQUE %d | Contenido: %s}"];`, blockIndex, blockIndex, html.EscapeString(content))
+                dotContent += blockContent
+
+                // Conectar inodo con bloque
+                dotContent += fmt.Sprintf(`"INODO %d" -> "BLOQUE %d";`, inodeIndex, blockIndex)
+            }
+        }
+
+        // Procesar hijos recursivamente
+        for _, blockIndex := range inode.I_block {
+            if blockIndex == -1 {
+                break
+            }
+
+            folderBlock := &FolderBlock{}
+            err := folderBlock.Deserialize(path, int64(sb.S_block_start+(blockIndex*sb.S_block_size)))
+            if err != nil {
+                continue
+            }
+
+            for _, contentEntry := range folderBlock.B_content {
+                name := strings.TrimRight(string(contentEntry.B_name[:]), "\x00")
+                if name == "" {
+                    continue
+                }
+
+                childInode := &Inode{}
+                err := childInode.Deserialize(path, int64(sb.S_inode_start+(contentEntry.B_inodo*sb.S_inode_size)))
+                if err != nil {
+                    continue
+                }
+
+                dotContent += fmt.Sprintf(`"INODO %d" -> "INODO %d" [label="%s"];`, inodeIndex, contentEntry.B_inodo, name)
+                dotContent += generateTree(childInode, contentEntry.B_inodo)
+            }
+        }
+
+        return content
+    }
+
+    dotContent += generateTree(rootInode, 0)
+    dotContent += "}"
+
+    // Crear el archivo `.dot`
+    dir := filepath.Dir(outputPath)
+    fileBase := strings.TrimSuffix(filepath.Base(outputPath), ".png")
+    dotFilePath := filepath.Join(dir, fileBase+".dot")
+    pngFilePath := filepath.Join(dir, fileBase+".png")
+
+    err = os.MkdirAll(dir, os.ModePerm)
+    if err != nil {
+        return fmt.Errorf("error al crear las carpetas padre: %w", err)
+    }
+
+    dotFile, err := os.Create(dotFilePath)
+    if err != nil {
+        return fmt.Errorf("error al crear el archivo .dot: %w", err)
+    }
+    defer dotFile.Close()
+
+    _, err = dotFile.WriteString(dotContent)
+    if err != nil {
+        return fmt.Errorf("error al escribir en el archivo .dot: %w", err)
+    }
+
+    // Ejecutar Graphviz para convertir el `.dot` en `.png`
+    cmd := exec.Command("dot", "-Tpng", dotFilePath, "-o", pngFilePath)
+    err = cmd.Run()
+    if err != nil {
+        return fmt.Errorf("error al ejecutar Graphviz: %w", err)
+    }
+
+    fmt.Println("Reporte de árbol generado:", pngFilePath)
+    return nil
+}

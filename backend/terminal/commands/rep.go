@@ -58,9 +58,9 @@ func ParseRep(tokens []string) (string, error) {
 			cmd.path = value
 		case "-name":
 			// Verifica que el nombre sea uno de los valores permitidos
-			validNames := []string{"mbr", "disk", "inode", "block", "bm_inode", "bm_block", "sb", "file", "ls"}
+			validNames := []string{"mbr", "disk", "inode", "block", "bm_inode", "bm_block", "sb", "file", "ls", "tree"}
 			if !contains(validNames, value) {
-				return "", errors.New("nombre inválido, debe ser uno de los siguientes: mbr, disk, inode, block, bm_inode, bm_block, sb, file, ls")
+				return "", errors.New("nombre inválido, debe ser uno de los siguientes: mbr, disk, inode, block, bm_inode, bm_block, sb, file, ls, tree")
 			}
 			cmd.name = value
 		case "-path_file_ls":
@@ -155,6 +155,12 @@ func commandRep(rep *REP) error {
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}
+
+	case "tree":
+        err = mountedSb.GenerateTreeDot(mountedDiskPath, rep.path)
+        if err != nil {
+            return fmt.Errorf("error al generar el reporte de árbol: %w", err)
+        }
 		
 
 	}
