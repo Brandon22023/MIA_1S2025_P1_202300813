@@ -170,3 +170,11 @@ func (mbr *MBR) PrintPartitions() {
 		fmt.Printf("  ID: %s\n", partID)
 	}
 }
+func (mbr *MBR) PartitionExists(name string) bool {
+	for i := 0; i < len(mbr.Mbr_partitions); i++ {
+		if string(mbr.Mbr_partitions[i].Part_name[:]) == name {
+			return true
+		}
+	}
+	return false
+}

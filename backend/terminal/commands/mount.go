@@ -91,12 +91,20 @@ func ParseMount(tokens []string) (string, error) {
 }
 
 func commandMount(mount *MOUNT) (string, error) {
+
+	// Verificar si la partición existe en el disco
+    err := VerifyPartitionExists(mount.path, mount.name)
+    if err != nil {
+        return "", err
+    }
+
+
 	// Crear una instancia de MBR
 	var mbr structures.MBR
 
 
 	// Deserializar la estructura MBR desde un archivo binario
-	err := mbr.DeserializeMBR(mount.path)
+	err = mbr.DeserializeMBR(mount.path)
 	if err != nil {
 		fmt.Println("Error deserializando el MBR:", err)
 		return "", err
@@ -167,4 +175,29 @@ func generatePartitionID(mount *MOUNT) (string, int, error) {
 	idPartition := fmt.Sprintf("%s%d%s", stores.Carnet, partitionCorrelative, letter)
 
 	return idPartition, partitionCorrelative, nil
+}
+
+func VerifyPartitionExists(path string, name string) error {
+    // Crear una instancia de MBR
+    var mbr structures.MBR
+
+    // Deserializar la estructura MBR desde el archivo binario
+    err := mbr.DeserializeMBR(path)
+    if err != nil {
+        return fmt.Errorf("error deserializando el MBR desde el archivo '%s': %v", path, err)
+    }
+
+    // Buscar la partición con el nombre especificado
+    partition, _, err := mbr.GetPartitionByName(name)
+    if err != nil {
+        return fmt.Errorf("error: la partición con el nombre '%s' no existe en el disco o ya fue montada'%s'", name, path)
+    }
+
+    // Si la partición existe, no hay error
+    if partition != nil {
+        return nil
+    }
+
+    // Si no se encuentra la partición, devolver un error
+    return fmt.Errorf("error: la partición con el nombre '%s' no existe en el disco o ya fue montada '%s'", name, path)
 }
