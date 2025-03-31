@@ -86,6 +86,7 @@ func ParseRep(tokens []string) (string, error) {
 	err = commandRep(cmd)
 	if err != nil {
 		fmt.Println("Error:", err)
+		
 	}
 
 	return fmt.Sprintf("REP: Reporte generado exitosamente\n"+
